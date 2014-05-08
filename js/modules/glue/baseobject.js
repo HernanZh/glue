@@ -115,6 +115,7 @@ glue.module.create(
                     removedChildren.length = 0;
                 },
                 module = {
+                    timer: 0,
                     add: function (object) {
                         return Sugar.combine(this, object);
                     },
@@ -137,7 +138,7 @@ glue.module.create(
                         for (i = 0, l = children.length; i < l; ++i) {
                             children[i].update(gameData);
                         }
-
+                        ++this.timer;
                     },
                     count: 0,
                     updateWhenPaused: false,
@@ -150,11 +151,11 @@ glue.module.create(
                             return;
                         }
                         context.save();
-                        context.translate(position.x, position.y);
+                        context.translate(Math.round(position.x), Math.round(position.y));
 
                         // scroll (only applies to parent objects)
                         if (parent === null) {
-                            context.translate(-scroll.x, -scroll.y);
+                            context.translate(Math.round(-scroll.x), Math.round(-scroll.y));
                         }
 
 
@@ -162,7 +163,7 @@ glue.module.create(
                         callRegistrants('draw', gameData);
 
                         // translate to origin
-                        context.translate(-origin.x, -origin.y);
+                        context.translate(Math.round(-origin.x), Math.round(-origin.y));
 
                         // draws animatable and spritable
                         for (d = 0; d < dLength; ++d) {
@@ -301,6 +302,15 @@ glue.module.create(
                         if (Sugar.isVector(value)) {
                             origin.x = Sugar.isNumber(value.x) ? value.x : origin.x;
                             origin.y = Sugar.isNumber(value.y) ? value.y : origin.y;
+                            this.updateBoundingBox();
+                        }
+                    },
+                    setOriginRelative: function (value) {
+                        var dimension;
+                        if (Sugar.isVector(value)) {
+                            dimension = this.getDimension();
+                            origin.x = value.x * dimension.width;
+                            origin.y = value.y * dimension.height;
                             this.updateBoundingBox();
                         }
                     },
