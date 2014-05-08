@@ -192,7 +192,7 @@ glue.module.create('glue/game', [
         },
         lastTime = new Date().getTime(),
         cumulativeTime = 0,
-        minimumFps = 10,
+        minimumFps = 30,
         cycle = function (time) {
             var fps,
                 component,
