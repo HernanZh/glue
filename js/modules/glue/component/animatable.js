@@ -123,7 +123,7 @@ glue.module.create('glue/component/animatable', [
             },
             getBoundingBox: function () {
                 var rectangle = object.getBoundingBox();
-                rectangle.x2 = rectangle.x1 + frameWidth;
+                rectangle.width = frameWidth;
                 return rectangle;
             },
             getFrameWidth: function () {

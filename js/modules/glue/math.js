@@ -40,10 +40,10 @@ glue.module.create(
                 },
                 getHalfRectangle: function (rectangle) {
                     var tempRect = Rectangle(
-                            rectangle.x1 + (rectangle.x2 / 2),
-                            rectangle.y1 + (rectangle.y2 / 2),
-                            rectangle.x2 / 2,
-                            rectangle.y2 / 2
+                            rectangle.x + (rectangle.width / 2),
+                            rectangle.y + (rectangle.height / 2),
+                            rectangle.width / 2,
+                            rectangle.height / 2
                         );
                     return tempRect;
                 }

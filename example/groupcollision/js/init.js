@@ -165,7 +165,7 @@ glue.module.get(
                             context.closePath();
                         } else {
                             bound = this.kineticable.toRectangle();
-                            context.strokeRect(bound.x1, bound.y1, bound.x2, bound.y2);
+                            context.strokeRect(bound.x, bound.y, bound.width, bound.height);
                         }
                     }
                 });

@@ -296,7 +296,7 @@ glue.module.create(
                         if (scale.y < 0) {
                             y2 = [y1, y1 = y2][0];
                         }
-                        rectangle = Rectangle(x1, y1, x2, y2);
+                        rectangle = Rectangle(x1, y1, x2 - x1, y2 - y1);
                     },
                     setOrigin: function (value) {
                         if (Sugar.isVector(value)) {

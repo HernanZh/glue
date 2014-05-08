@@ -36,19 +36,19 @@ glue.module.create(
                 if (rect1.intersect(rect2)) {
                     var inter = rect1.intersection(rect2),
                         direction = Vector(0, 0);
-                    if (inter.x2 > inter.y2) {
-                        direction.y = math.sign(rect1.y1 - rect2.y1);
-                        correction.y += inter.y2 * direction.y;
+                    if (inter.width > inter.height) {
+                        direction.y = math.sign(rect1.y - rect2.y);
+                        correction.y += inter.height * direction.y;
                         side.y = direction.y;
                     } else {
-                        direction.x = math.sign(rect1.x1 - rect2.x1)
-                        correction.x += inter.x2 * direction.x;
+                        direction.x = math.sign(rect1.x - rect2.x)
+                        correction.x += inter.width * direction.x;
                         side.x = direction.x;
                     }
-                    rect.x1 = inter.x1;
-                    rect.y1 = inter.y1;
-                    rect.x2 = inter.x2;
-                    rect.y2 = inter.y2;
+                    rect.x = inter.x;
+                    rect.y = inter.y;
+                    rect.width = inter.width;
+                    rect.height = inter.height;
                     return true;
                 }
                 return false;
@@ -103,32 +103,32 @@ glue.module.create(
                     correction2 = Vector(0, 0),
                     side1 = Vector(0, 0),
                     side2 = Vector(0, 0),
-                    velocity1,
-                    velocity2,
+                    velocity,
+                    velocitheight,
                     position1,
                     position2,
                     intersection = Rectangle(0, 0, 0, 0);
                 if (rectCollision(bound1, bound2, correction2, side2, intersection)) {
                     if (obj2.kineticable.isDynamic()) {
-                        velocity2 = obj2.kineticable.getVelocity();
+                        velocitheight = obj2.kineticable.getVelocity();
                         position2 = obj2.kineticable.getPosition();
                         position2.substract(correction2);
                         side2.scale(-1);
                         obj2.kineticable.setPosition(position2);
                         obj2.kineticable.setSide(side2);
                         if (side2.y !== 0) {
-                            if ((side2.y > 0 && velocity2.y < 0) || (side2.y < 0 && velocity2.y > 0 && intersection.y2 > 1)) {
-                                velocity2.y *= -obj2.kineticable.getBounce();
+                            if ((side2.y > 0 && velocitheight.y < 0) || (side2.y < 0 && velocitheight.y > 0 && intersection.height > 1)) {
+                                velocitheight.y *= -obj2.kineticable.getBounce();
                             }
                         } else if (side2.x !== 0) {
-                            if ((side2.x > 0 && velocity2.x < 0) || (side2.x < 0 && velocity2.x > 0 && intersection.x2 > 1)) {
-                                velocity2.x *= -obj2.kineticable.getBounce();
+                            if ((side2.x > 0 && velocitheight.x < 0) || (side2.x < 0 && velocitheight.x > 0 && intersection.width > 1)) {
+                                velocitheight.x *= -obj2.kineticable.getBounce();
                             }
                         }
                     }
 
                     if (obj1.kineticable.isDynamic()) {
-                        velocity1 = obj1.kineticable.getVelocity();
+                        velocity = obj1.kineticable.getVelocity();
                         position1 = obj1.kineticable.getPosition();
                         rectCollision(bound2, bound1, correction1, side1, intersection);
                         position1.substract(correction1);
@@ -136,12 +136,12 @@ glue.module.create(
                         obj1.kineticable.setPosition(position1);
                         obj1.kineticable.setSide(side1);
                         if (side1.y !== 0) {
-                            if ((side1.y > 0 && velocity1.y < 0) || (side1.y < 0 && velocity1.y > 0)) {
-                                velocity1.y *= -obj1.kineticable.getBounce();
+                            if ((side1.y > 0 && velocity.y < 0) || (side1.y < 0 && velocity.y > 0)) {
+                                velocity.y *= -obj1.kineticable.getBounce();
                             }
                         } else if (side1.x !== 0) {
-                            if ((side1.x > 0 && velocity1.x < 0) || (side1.x < 0 && velocity1.x > 0)) {
-                                velocity1.x *= -obj1.kineticable.getBounce();
+                            if ((side1.x > 0 && velocity.x < 0) || (side1.x < 0 && velocity.x > 0)) {
+                                velocity.x *= -obj1.kineticable.getBounce();
                             }
                         }
                     }

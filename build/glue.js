@@ -6528,7 +6528,7 @@ glue.module.create(
                         if (scale.y < 0) {
                             y2 = [y1, y1 = y2][0];
                         }
-                        rectangle = Rectangle(x1, y1, x2, y2);
+                        rectangle = Rectangle(x1, y1, x2 - x1, y2 - y1);
                     },
                     setOrigin: function (value) {
                         if (Sugar.isVector(value)) {
@@ -6727,7 +6727,7 @@ glue.module.create('glue/component/animatable', [
             },
             getBoundingBox: function () {
                 var rectangle = object.getBoundingBox();
-                rectangle.x2 = rectangle.x1 + frameWidth;
+                rectangle.width = frameWidth;
                 return rectangle;
             },
             getFrameWidth: function () {
@@ -9566,10 +9566,10 @@ glue.module.create(
                 },
                 getHalfRectangle: function (rectangle) {
                     var tempRect = Rectangle(
-                            rectangle.x1 + (rectangle.x2 / 2),
-                            rectangle.y1 + (rectangle.y2 / 2),
-                            rectangle.x2 / 2,
-                            rectangle.y2 / 2
+                            rectangle.x + (rectangle.width / 2),
+                            rectangle.y + (rectangle.height / 2),
+                            rectangle.width / 2,
+                            rectangle.height / 2
                         );
                     return tempRect;
                 }
@@ -9980,74 +9980,55 @@ glue.module.create(
  *  @copyright (C) SpilGames
  *  @license BSD 3-Clause License (see LICENSE file in project root)
  */
-glue.module.create(
-    'glue/math/rectangle',
-    function () {
-        'use strict';
-        return function (x1, y1, x2, y2) {
-            return {
-                x1: x1,
-                y1: y1,
-                x2: x2,
-                y2: y2,
-                get: function () {
-                    return {
-                        x1: this.x1,
-                        y1: this.y1,
-                        x2: this.x2,
-                        y2: this.y2
-                    };
-                },
-                hasPosition: function (position) {
-                    if (position.x >= this.x1 && position.x <= this.x2 &&
-                        position.y >= this.y1 && position.y <= this.y2) {
-                        return true;
-                    }
-                },
-                getWidth: function () {
-                    return this.x2 - this.x1;
-                },
-                getHeight: function () {
-                    return this.y2 - this.y1;
-                },
-                setWidth: function (width) {
-                    this.x2 = this.x1 + width;
-                },
-                setHeight: function (height) {
-                    this.y2 = this.y1 + height;
-                },
-                union: function (rectangle) {
-                    this.x1 = Math.min(this.x1, rectangle.x1);
-                    this.y1 = Math.min(this.y1, rectangle.y1);
-                    this.x2 = Math.max(this.x2, rectangle.x2);
-                    this.y2 = Math.max(this.y2, rectangle.y2);
-                },
-                intersect: function (rectangle) {
-                    return this.x1 + this.x2 > rectangle.x1 &&
-                           this.x1 < rectangle.x1 + rectangle.x2 &&
-                           this.y1 + this.y2 > rectangle.y1 &&
-                           this.y1 < rectangle.y1 + rectangle.y2;
-                },
-                intersection: function (rectangle) {
-                    var inter = {
-                        x1: 0,
-                        y1: 0,
-                        x2: 0,
-                        y2: 0
-                    };
-                    if (this.intersect(rectangle)) {
-                        inter.x1 = Math.max(this.x1, rectangle.x1);
-                        inter.y1 = Math.max(this.y1, rectangle.y1);
-                        inter.x2 = Math.min(this.x1 + this.x2, rectangle.x1 + rectangle.x2) - inter.x1;
-                        inter.y2 = Math.min(this.y1 + this.y2, rectangle.y1 + rectangle.y2) - inter.y1;
-                    }
-                    return inter;
+glue.module.create('glue/math/rectangle', function () {
+    'use strict';
+    var module = function (x, y, width, height) {
+        return {
+            x: x,
+            y: y,
+            width: width,
+            height: height,
+            hasPosition: function (position) {
+                if (position.x >= this.x && position.x <= this.x + this.width &&
+                    position.y >= this.y && position.y <= this.y + this.height) {
+                    return true;
+                } else {
+                    return false;
                 }
-            };
+            },
+            getX2: function () {
+                return this.x + this.width;
+            },
+            getY2: function () {
+                return this.y + this.height;
+            },
+            union: function (rectangle) {
+                var x1 = Math.min(this.x, rectangle.x),
+                    y1 = Math.min(this.y, rectangle.y),
+                    x2 = Math.max(this.getX2(), rectangle.getX2()),
+                    y2 = Math.max(this.getY2(), rectangle.getY2());
+                return module(x1, y1, x2 - x1, y2 - y1);
+            },
+            intersect: function (rectangle) {
+                return !(this.x + this.width <= rectangle.x ||
+                    this.y + this.height <= rectangle.y ||
+                    this.x >= rectangle.x + rectangle.width ||
+                    this.y >= rectangle.y + rectangle.height);
+            },
+            intersection: function (rectangle) {
+                var inter = module(0, 0, 0, 0);
+                if (this.intersect(rectangle)) {
+                    inter.x = Math.max(this.x, rectangle.x);
+                    inter.y = Math.max(this.y, rectangle.y);
+                    inter.width = Math.min(this.x + this.width, rectangle.x + rectangle.width) - inter.x;
+                    inter.height = Math.min(this.y + this.height, rectangle.y + rectangle.height) - inter.y;
+                }
+                return inter;
+            }
         };
-    }
-);
-
+    };
+    return module;
+});
 /**
  *  @module Vector
  *  @namespace math
@@ -10258,19 +10239,19 @@ glue.module.create(
                 if (rect1.intersect(rect2)) {
                     var inter = rect1.intersection(rect2),
                         direction = Vector(0, 0);
-                    if (inter.x2 > inter.y2) {
-                        direction.y = math.sign(rect1.y1 - rect2.y1);
-                        correction.y += inter.y2 * direction.y;
+                    if (inter.width > inter.height) {
+                        direction.y = math.sign(rect1.y - rect2.y);
+                        correction.y += inter.height * direction.y;
                         side.y = direction.y;
                     } else {
-                        direction.x = math.sign(rect1.x1 - rect2.x1)
-                        correction.x += inter.x2 * direction.x;
+                        direction.x = math.sign(rect1.x - rect2.x)
+                        correction.x += inter.width * direction.x;
                         side.x = direction.x;
                     }
-                    rect.x1 = inter.x1;
-                    rect.y1 = inter.y1;
-                    rect.x2 = inter.x2;
-                    rect.y2 = inter.y2;
+                    rect.x = inter.x;
+                    rect.y = inter.y;
+                    rect.width = inter.width;
+                    rect.height = inter.height;
                     return true;
                 }
                 return false;
@@ -10325,32 +10306,32 @@ glue.module.create(
                     correction2 = Vector(0, 0),
                     side1 = Vector(0, 0),
                     side2 = Vector(0, 0),
-                    velocity1,
-                    velocity2,
+                    velocity,
+                    velocitheight,
                     position1,
                     position2,
                     intersection = Rectangle(0, 0, 0, 0);
                 if (rectCollision(bound1, bound2, correction2, side2, intersection)) {
                     if (obj2.kineticable.isDynamic()) {
-                        velocity2 = obj2.kineticable.getVelocity();
+                        velocitheight = obj2.kineticable.getVelocity();
                         position2 = obj2.kineticable.getPosition();
                         position2.substract(correction2);
                         side2.scale(-1);
                         obj2.kineticable.setPosition(position2);
                         obj2.kineticable.setSide(side2);
                         if (side2.y !== 0) {
-                            if ((side2.y > 0 && velocity2.y < 0) || (side2.y < 0 && velocity2.y > 0 && intersection.y2 > 1)) {
-                                velocity2.y *= -obj2.kineticable.getBounce();
+                            if ((side2.y > 0 && velocitheight.y < 0) || (side2.y < 0 && velocitheight.y > 0 && intersection.height > 1)) {
+                                velocitheight.y *= -obj2.kineticable.getBounce();
                             }
                         } else if (side2.x !== 0) {
-                            if ((side2.x > 0 && velocity2.x < 0) || (side2.x < 0 && velocity2.x > 0 && intersection.x2 > 1)) {
-                                velocity2.x *= -obj2.kineticable.getBounce();
+                            if ((side2.x > 0 && velocitheight.x < 0) || (side2.x < 0 && velocitheight.x > 0 && intersection.width > 1)) {
+                                velocitheight.x *= -obj2.kineticable.getBounce();
                             }
                         }
                     }
 
                     if (obj1.kineticable.isDynamic()) {
-                        velocity1 = obj1.kineticable.getVelocity();
+                        velocity = obj1.kineticable.getVelocity();
                         position1 = obj1.kineticable.getPosition();
                         rectCollision(bound2, bound1, correction1, side1, intersection);
                         position1.substract(correction1);
@@ -10358,12 +10339,12 @@ glue.module.create(
                         obj1.kineticable.setPosition(position1);
                         obj1.kineticable.setSide(side1);
                         if (side1.y !== 0) {
-                            if ((side1.y > 0 && velocity1.y < 0) || (side1.y < 0 && velocity1.y > 0)) {
-                                velocity1.y *= -obj1.kineticable.getBounce();
+                            if ((side1.y > 0 && velocity.y < 0) || (side1.y < 0 && velocity.y > 0)) {
+                                velocity.y *= -obj1.kineticable.getBounce();
                             }
                         } else if (side1.x !== 0) {
-                            if ((side1.x > 0 && velocity1.x < 0) || (side1.x < 0 && velocity1.x > 0)) {
-                                velocity1.x *= -obj1.kineticable.getBounce();
+                            if ((side1.x > 0 && velocity.x < 0) || (side1.x < 0 && velocity.x > 0)) {
+                                velocity.x *= -obj1.kineticable.getBounce();
                             }
                         }
                     }
