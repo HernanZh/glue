@@ -6629,14 +6629,9 @@ glue.module.create('glue/component/animatable', [
             errorCallback,
             frameWidth,
             frameHeight,
-            columns,
-            rows,
             startFrame,
             endFrame,
             image,
-            loopCount,
-            currentLoop,
-            looping,
             onCompleteCallback,
             frameCountX,
             frameCountY,
@@ -6646,45 +6641,54 @@ glue.module.create('glue/component/animatable', [
                     image = currentAnimation.image;
                 }
                 currentFrame = 0;
-                loopCount = currentAnimation.loopCount || undefined;
-                // onCompleteCallback = currentAnimation.onComplete || undefined;
-                currentLoop = 0;
-                looping = true;
             };
 
         baseComponent.set({
             setup: function (settings) {
                 var animation;
-                if (settings) {
-                    if (settings.animation) {
-                        animationSettings = settings.animation;
-                        if (settings.animation.animations) {
-                            animations = settings.animation.animations;
-                        }
-                    } else {
-                        throw 'Specify settings.animation';
-                    }
+                if (!settings) {
+                    throw 'Supply settings';
                 }
+                if (!settings.image) {
+                    throw 'Set an image';
+                }
+                if (settings.animation) {
+                    animationSettings = settings.animation;
+                } else {
+                    // create default animation
+                    animationSettings = {
+                        frameCountX: 1,
+                        frameCountY: 1
+                    };
+                }
+                // add default animation
+                if (!animationSettings.animations) {
+                    animationSettings.animations = {};
+                }
+                if (!animationSettings.animations['default']) {
+                    animationSettings.animations['default'] = {
+                        frames: [0]
+                    };
+                }
+                animations = animationSettings.animations;
                 spritable.setup(settings);
-                if (settings.image) {
-                    image = settings.image;
-                    frameWidth = settings.animation.frameWidth ||
-                        settings.image.width / settings.animation.frameCountX;
-                    frameHeight = settings.animation.frameHeight ||
-                        settings.image.height / settings.animation.frameCountY;
-                    columns = settings.image.width / frameWidth;
-                    rows = settings.image.height / frameHeight;
-                    frameCountX = settings.animation.frameCountX;
-                    frameCountY = settings.animation.frameCountY;
-                    object.getDimension().width = frameWidth;
-                    object.getDimension().height = frameHeight;
-                }
+                image = settings.image;
+                frameCountX = animationSettings.frameCountX;
+                frameCountY = animationSettings.frameCountY;
+                frameWidth = settings.image.width / frameCountX;
+                frameHeight = settings.image.height / frameCountY;
+                // set dimension of base object
+                object.getDimension().width = frameWidth;
+                object.getDimension().height = frameHeight;
+                // set to default
+                currentAnimation = animations['default'];
             },
             update: function (gameData) {
+                var reachedEnd;
                 if (!currentAnimation) {
                     return;
                 }
-                var reachedEnd = false;
+                reachedEnd = false;
                 currentFrame += currentAnimation.imageSpeed || 1;
                 while (currentFrame >= currentAnimation.frames.length) {
                     currentFrame -= currentAnimation.frames.length;
@@ -6719,16 +6723,6 @@ glue.module.create('glue/component/animatable', [
                     currentAnimation = anim;
                     setAnimation();
                 }
-            },
-            getDimension: function () {
-                var dimension = object.getDimension();
-                dimension.width = frameWidth;
-                return dimension;
-            },
-            getBoundingBox: function () {
-                var rectangle = object.getBoundingBox();
-                rectangle.width = frameWidth;
-                return rectangle;
             },
             getFrameWidth: function () {
                 return frameWidth;
