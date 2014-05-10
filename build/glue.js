@@ -9808,30 +9808,21 @@ glue.module.create('glue/math/polygon', ['glue/math/rectangle'], function (Recta
             q,
             doLineSegmentsIntersect = function (p, p2, q, q2) {
                 // based on of https://github.com/pgkelley4/line-segments-intersect
-                var r,
-                    s,
-                    uNumerator,
-                    denominator,
+                var crossProduct = function (p1, p2) {
+                        return p1.x * p2.y - p1.y * p2.x;
+                    },
+                    subtractPoints = function (p1, p2) {
+                        return {
+                            x: p1.x - p2.x,
+                            y: p1.y - p2.y
+                        };
+                    },
+                    r = subtractPoints(p2, p),
+                    s = subtractPoints(q2, q),
+                    uNumerator = crossProduct(subtractPoints(q, p), r),
+                    denominator = crossProduct(r, s),
                     u,
-                    t
-                    crossProduct,
-                    subtractPoints;
-
-                // optimize by comparing extremes first?
-                
-                crossProduct = function (p1, p2) {
-                    return p1.x * p2.y - p1.y * p2.x;
-                };
-                subtractPoints = function (p1, p2) {
-                    return {
-                        x: p1.x - p2.x,
-                        y: p1.y - p2.y
-                    };
-                };
-                r = subtractPoints(p2, p);
-                s = subtractPoints(q2, q);
-                uNumerator = crossProduct(subtractPoints(q, p), r);
-                denominator = crossProduct(r, s);
+                    t;
                 if (uNumerator == 0 && denominator == 0) {
                     return ((q.x - p.x < 0) != (q.x - p2.x < 0) != (q2.x - p.x < 0) != (q2.x - p2.x < 0)) ||
                         ((q.y - p.y < 0) != (q.y - p2.y < 0) != (q2.y - p.y < 0) != (q2.y - p2.y < 0));
