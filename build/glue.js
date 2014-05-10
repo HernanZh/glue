@@ -6360,9 +6360,6 @@ glue.module.create(
                     update: function (gameData) {
                         var i,
                             l;
-                        if (!active) {
-                            return;
-                        }
                         callRegistrants('update', gameData);
                         // clean up
                         removeChildren();
@@ -6419,9 +6416,6 @@ glue.module.create(
                             l = children.length,
                             childEvent,
                             pos;
-                        if (!active) {
-                            return;
-                        }
                         callRegistrants('pointerDown', e);
 
                         if (l) {
@@ -6437,9 +6431,6 @@ glue.module.create(
                             l = children.length,
                             childEvent,
                             pos;
-                        if (!active) {
-                            return;
-                        }
                         callRegistrants('pointerMove', e);
 
                         if (l) {
@@ -6455,9 +6446,6 @@ glue.module.create(
                             l = children.length,
                             childEvent,
                             pos;
-                        if (!active) {
-                            return;
-                        }
                         callRegistrants('pointerUp', e);
 
                         if (l) {
@@ -6508,9 +6496,7 @@ glue.module.create(
                         return rectangle;
                     },
                     setBoundingBox: function (value) {
-                        if (active) {
-                            rectangle = value;
-                        }
+                        rectangle = value;
                     },
                     updateBoundingBox: function () {
                         var scale = module.scalable ? module.scalable.getScale() : Vector(1, 1),
@@ -6518,9 +6504,6 @@ glue.module.create(
                             y1 = position.y - origin.y * scale.y,
                             x2 = position.x + (dimension.width - origin.x) * scale.x,
                             y2 = position.y + (dimension.height - origin.y) * scale.y;
-                        if (!active) {
-                            return;
-                        }
                         // swap variables if scale is negative
                         if (scale.x < 0) {
                             x2 = [x1, x1 = x2][0];
@@ -6549,25 +6532,11 @@ glue.module.create(
                     getOrigin: function () {
                         return origin;
                     },
-                    isActive: function () {
-                        return active;
-                    },
-                    setActive: function (value) {
-                        if (Sugar.isBoolean(value)) {
-                            active = value;
-                        } else {
-                            throw "value should be a boolean";
-                        }
-                    },
                     isVisible: function () {
                         return visible;
                     },
                     setVisible: function (value) {
-                        if (Sugar.isBoolean(value)) {
-                            visible = value;
-                        } else {
-                            throw "value should be a boolean";
-                        }
+                        visible = value;
                     },
                     addChild: function (baseObject) {
                         children.push(baseObject);
@@ -8404,57 +8373,7 @@ glue.module.create(
             screens = {},
             activeScreen = null,
             getScreen = function (name) {
-                if (Sugar.isString(name)) {
-                    if (Sugar.isObject(screens[name])) {
-                        return screens[name];
-                    }
-                }
-            },
-            toggleScreen = function (name, action, callback) {
-                var screen,
-                    objects,
-                    i = 0,
-                    l,
-                    objectsHandled = 0,
-                    objectHandled = function () {
-                        objectsHandled++;
-                        if (objectsHandled >= screen.getObjects().length + 1) {
-                            if (action === 'show' && Sugar.isFunction(screen.onShow)) {
-                                screen.onShow();
-                            } else if (action === 'hide' && Sugar.isFunction(screen.onHide)) {
-                                screen.onHide();
-                            }
-                            if (Sugar.isFunction(callback)) {
-                                callback();
-                            }
-                        }
-                    };
-
-                if (Sugar.isString(name)) {
-                    screen = getScreen(name);
-                    if (action === 'show') {
-                        Game.add(screen, objectHandled);
-                        screen.setShown(true);
-                    }
-                    if (action === 'hide') {
-                        Game.remove(screen, objectHandled);
-                        screen.setShown(false);
-                    }
-                    objects = screen.getObjects();
-                    l = objects.length;
-                    for (i; i < l; ++i) {
-                        if (action === 'show') {
-                            Game.add(objects[i], objectHandled);
-                        } else if (action === 'hide') {
-                            Game.remove(objects[i], objectHandled);
-                        }
-                    }
-                    if (action === 'show') {
-                        activeScreen = screen;
-                    } else if (action === 'hide') {
-                        activeScreen = null;
-                    }
-                }
+                return screens[name];
             },
             module = {
                 /**
@@ -8464,43 +8383,10 @@ glue.module.create(
                  * @function
                  */
                 addScreen: function (screen) {
-                    if (Sugar.isFunction(screen.getName) && Sugar.isObject(screen)) {
-                        screens[screen.getName()] = screen;
-                    }                    
-                },
-                /**
-                 * Remove a screen from the Director
-                 * @name removeScreen
-                 * @memberOf Director
-                 * @function
-                 */
-                removeScreen: function (screen, callback) {
-                    var screenName;
-                    if (Sugar.isFunction(screen.getName) && Sugar.isObject(screen)) {
-                        screenName = screen.getName();
-                        toggleScreen(screenName, 'hide', callback);
+                    if (!screen.getName()) {
+                        throw 'Add name property to screen'
                     }
-                    if (Sugar.isObject(screens[screenName])) {
-                        delete screens[screenName];
-                    }
-                },
-                /**
-                 * Get all screens that are added to the Director
-                 * @name getScreens
-                 * @memberOf Director
-                 * @function
-                 */
-                getScreens: function () {
-                    return screens;
-                },
-                /**
-                 * Get a specific screen
-                 * @name getScreen
-                 * @memberOf Director
-                 * @function
-                 */
-                getScreen: function (value) {
-                    return screens[value];
+                    screens[screen.getName()] = screen;
                 },
                 /**
                  * Show a screen
@@ -8509,25 +8395,31 @@ glue.module.create(
                  * @function
                  */
                 showScreen: function (name, callback) {
-                    var activeScreenName;
-                    if (Sugar.isString(name)) {
-                        if (activeScreen !== null) {
-                            activeScreenName = activeScreen.getName();
-                            toggleScreen(activeScreenName, 'hide');    
-                        }
-                        toggleScreen(name, 'show', callback);
+                    if (activeScreen !== null) {
+                        console.log('onHide')
+                        this.hideScreen();
+                    }
+                    activeScreen = screens[name];
+                    console.log(activeScreen)
+                    if (activeScreen) {
+                        console.log('onShow')
+                        activeScreen.onShow();
+                    } else {
+                        throw 'Could not find screen';
                     }
                 },
                 /**
-                 * Hide a screen
+                 * Hides current screen
                  * @name hideScreen
                  * @memberOf Director
                  * @function
                  */
-                hideScreen: function (name, callback) {
-                    if (Sugar.isString(name)) {
-                        toggleScreen(name, 'hide', callback);
+                hideScreen: function () {
+                    if (!activeScreen) {
+                        return;
                     }
+                    activeScreen.onHide();
+                    activeScreen = null;
                 },
                 /*
                  * Get the active screen
@@ -8739,65 +8631,22 @@ glue.module.create('glue/game', [
                 });
             }
         },
-        addObjects = function () {
-            var object,
-                callbackObject,
-                i,
-                j;
-
-            if (addedObjects.length) {
-                for (i = 0; i < addedObjects.length; ++i) {
-                    object = addedObjects[i];
-                    object.z = object.z || 0;
-                    objects.push(object);
-                    if (object.init) {
-                        object.init();
-                    }
-                };
-                addedObjects = [];
-                if (addCallbacks.length) {
-                    for (j = 0; j < addCallbacks.length; ++j) {
-                        callbackObject = addCallbacks[j];
-                        if (callbackObject) {
-                            callbackObject.callback(callbackObject.object);
-                        }
-                    };
-                    addCallbacks = [];
+        cleanObjects = function () {
+            var i;
+            // loop objects array from end to start and remove null elements
+            for (i = objects.length - 1; i >= 0; --i) {
+                if (objects[i] === null) {
+                    objects.splice(i, 1);
                 }
             }
         },
-        removeObjects = function () {
-            var object,
-                callbackObject,
-                i,
-                j;
-
-            if (removedObjects.length) {
-                for (i = 0; i < removedObjects.length; ++i) {
-                    object = removedObjects[i];
-                    if (object.destroy) {
-                        object.destroy();
-                    }
-                    Sugar.removeObject(objects, object);
-                };
-                removedObjects = [];
-                if (removeCallbacks.length) {
-                    for (j = 0; j < removeCallbacks.length; ++j) {
-                        callbackObject = removeCallbacks[j];
-                        if (callbackObject) {
-                            callbackObject.callback(callbackObject.object);
-                        }
-                    };
-                    removeCallbacks = [];
-                }
-            }
-        },
-        redraw = function () {
+        predraw = function () {
             if (useDoubleBuffering) {
                 backBufferContext2D.clear(true);
             }
             context2D.clear(true);
         },
+        postdraw = function () {},
         lastTime = new Date().getTime(),
         cumulativeTime = 0,
         minimumFps = 30,
@@ -8810,10 +8659,6 @@ glue.module.create('glue/game', [
                 deltaT = currentTime - lastTime;
 
             if (canvasSupported) {
-                if (useSort) {
-                    sort();
-                }
-                redraw();
                 lastTime = currentTime;
                 cumulativeTime += deltaT;
                 if (debug) {
@@ -8845,21 +8690,31 @@ glue.module.create('glue/game', [
                         }
                     }
                     gameData.objectLength = objects.length;
-                    removeObjects();
-                    addObjects();
                     for (i = 0; i < objects.length; ++i) {
                         component = objects[i];
+                        if (!component) {
+                            continue;
+                        }
                         if (component.update && ((isPaused && component.updateWhenPaused) || !isPaused)) {
                             component.update(gameData);
                         }
                     };
                 }
+                cleanObjects();
+                if (useSort) {
+                    sort();
+                }
+                predraw();
                 for (i = 0; i < objects.length; ++i) {
                     component = objects[i];
+                    if (!component) {
+                        continue;
+                    }
                     if (component.draw) {
                         component.draw(gameData);
                     }
                 };
+                postdraw();
 
                 if (useDoubleBuffering) {
                     context2D.save();
@@ -8884,12 +8739,13 @@ glue.module.create('glue/game', [
                 l,
                 component;
 
-            if (isRunning) {
-                for (i = 0, l = objects.length; i < l; ++i) {
-                    component = objects[i];
-                    if (component.pointerDown && ((isPaused && component.updateWhenPaused) || !isPaused)) {
-                        component.pointerDown(e);
-                    }
+            if (!isRunning) {
+                return;
+            }
+            for (i = 0, l = objects.length; i < l; ++i) {
+                component = objects[i];
+                if (component && component.pointerDown && ((isPaused && component.updateWhenPaused) || !isPaused)) {
+                    component.pointerDown(e);
                 }
             }
         },
@@ -8899,12 +8755,13 @@ glue.module.create('glue/game', [
                 l,
                 component;
 
-            if (isRunning) {
-                for (i = 0, l = objects.length; i < l; ++i) {
-                    component = objects[i];
-                    if (component.pointerMove && ((isPaused && component.updateWhenPaused) || !isPaused)) {
-                        component.pointerMove(e);
-                    }
+            if (!isRunning) {
+                return;
+            }
+            for (i = 0, l = objects.length; i < l; ++i) {
+                component = objects[i];
+                if (component && component.pointerMove && ((isPaused && component.updateWhenPaused) || !isPaused)) {
+                    component.pointerMove(e);
                 }
             }
         },
@@ -8914,12 +8771,13 @@ glue.module.create('glue/game', [
                 l,
                 component;
 
-            if (isRunning) {
-                for (i = 0, l = objects.length; i < l; ++i) {
-                    component = objects[i];
-                    if (component.pointerUp && ((isPaused && component.updateWhenPaused) || !isPaused)) {
-                        component.pointerUp(e);
-                    }
+            if (!isRunning) {
+                return;
+            }
+            for (i = 0, l = objects.length; i < l; ++i) {
+                component = objects[i];
+                if (component.pointerUp && ((isPaused && component.updateWhenPaused) || !isPaused)) {
+                    component.pointerUp(e);
                 }
             }
         },
@@ -9031,6 +8889,12 @@ glue.module.create('glue/game', [
                     if (config.game) {
                         gameInfo = config.game;
                     }
+                    if (config.predraw) {
+                        predraw = config.predraw;
+                    }
+                    if (config.postdraw) {
+                        postdraw = config.postdraw;
+                    }
                     if (config.develop && config.develop.debug) {
                         debug = true;
                         debugBar = document.createElement('div');
@@ -9092,29 +8956,34 @@ glue.module.create('glue/game', [
                 isRunning = false;
             },
             add: function (object, callback) {
-                if (callback) {
-                    addCallbacks.push({
-                        object: object,
-                        callback: callback
-                    });
+                object.z = object.z || 0;
+                objects.push(object);
+                if (object.init) {
+                    object.init();
                 }
-                addedObjects.push(object);
+                if (Sugar.isFunction(callback)) {
+                    callback(object);
+                }
             },
             remove: function (object, callback) {
-                if (callback) {
-                    removeCallbacks.push({
-                        object: object,
-                        callback: callback
-                    });
+                var index;
+                if (!object) {
+                    return;
                 }
-                removedObjects.push(object);
+                index = objects.indexOf(object);
+                if (index >= 0) {
+                    objects[index] = null;
+                    if (Sugar.isFunction(object.destroy)) {
+                        object.destroy();
+                    }
+                    if (Sugar.isFunction(callback)) {
+                        callback(object);
+                    }
+                }
             },
             removeAll: function () {
-                var i, l;
-                // clear removed and added arrays before removing everything
-                removedObjects.length = 0;
-                addedObjects.length = 0;
-                for (i = 0, l = objects.length; i < l; ++i) {
+                var i;
+                for (i = 0; i < objects.length; ++i) {
                     this.remove(objects[i]);
                 }
             },
@@ -9126,6 +8995,9 @@ glue.module.create('glue/game', [
 
                 for (i = 0, l = objects.length; i < l; ++i) {
                     component = objects[i];
+                    if (!component) {
+                        continue;
+                    }
                     name = component.getName();
                     if (!Sugar.isEmpty(name) && name === componentName) {
                         return component;

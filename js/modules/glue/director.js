@@ -17,57 +17,7 @@ glue.module.create(
             screens = {},
             activeScreen = null,
             getScreen = function (name) {
-                if (Sugar.isString(name)) {
-                    if (Sugar.isObject(screens[name])) {
-                        return screens[name];
-                    }
-                }
-            },
-            toggleScreen = function (name, action, callback) {
-                var screen,
-                    objects,
-                    i = 0,
-                    l,
-                    objectsHandled = 0,
-                    objectHandled = function () {
-                        objectsHandled++;
-                        if (objectsHandled >= screen.getObjects().length + 1) {
-                            if (action === 'show' && Sugar.isFunction(screen.onShow)) {
-                                screen.onShow();
-                            } else if (action === 'hide' && Sugar.isFunction(screen.onHide)) {
-                                screen.onHide();
-                            }
-                            if (Sugar.isFunction(callback)) {
-                                callback();
-                            }
-                        }
-                    };
-
-                if (Sugar.isString(name)) {
-                    screen = getScreen(name);
-                    if (action === 'show') {
-                        Game.add(screen, objectHandled);
-                        screen.setShown(true);
-                    }
-                    if (action === 'hide') {
-                        Game.remove(screen, objectHandled);
-                        screen.setShown(false);
-                    }
-                    objects = screen.getObjects();
-                    l = objects.length;
-                    for (i; i < l; ++i) {
-                        if (action === 'show') {
-                            Game.add(objects[i], objectHandled);
-                        } else if (action === 'hide') {
-                            Game.remove(objects[i], objectHandled);
-                        }
-                    }
-                    if (action === 'show') {
-                        activeScreen = screen;
-                    } else if (action === 'hide') {
-                        activeScreen = null;
-                    }
-                }
+                return screens[name];
             },
             module = {
                 /**
@@ -77,43 +27,10 @@ glue.module.create(
                  * @function
                  */
                 addScreen: function (screen) {
-                    if (Sugar.isFunction(screen.getName) && Sugar.isObject(screen)) {
-                        screens[screen.getName()] = screen;
-                    }                    
-                },
-                /**
-                 * Remove a screen from the Director
-                 * @name removeScreen
-                 * @memberOf Director
-                 * @function
-                 */
-                removeScreen: function (screen, callback) {
-                    var screenName;
-                    if (Sugar.isFunction(screen.getName) && Sugar.isObject(screen)) {
-                        screenName = screen.getName();
-                        toggleScreen(screenName, 'hide', callback);
+                    if (!screen.getName()) {
+                        throw 'Add name property to screen'
                     }
-                    if (Sugar.isObject(screens[screenName])) {
-                        delete screens[screenName];
-                    }
-                },
-                /**
-                 * Get all screens that are added to the Director
-                 * @name getScreens
-                 * @memberOf Director
-                 * @function
-                 */
-                getScreens: function () {
-                    return screens;
-                },
-                /**
-                 * Get a specific screen
-                 * @name getScreen
-                 * @memberOf Director
-                 * @function
-                 */
-                getScreen: function (value) {
-                    return screens[value];
+                    screens[screen.getName()] = screen;
                 },
                 /**
                  * Show a screen
@@ -122,25 +39,29 @@ glue.module.create(
                  * @function
                  */
                 showScreen: function (name, callback) {
-                    var activeScreenName;
-                    if (Sugar.isString(name)) {
-                        if (activeScreen !== null) {
-                            activeScreenName = activeScreen.getName();
-                            toggleScreen(activeScreenName, 'hide');    
-                        }
-                        toggleScreen(name, 'show', callback);
+                    if (activeScreen !== null) {
+                        this.hideScreen();
+                    }
+                    activeScreen = screens[name];
+                    console.log(activeScreen)
+                    if (activeScreen) {
+                        activeScreen.onShow();
+                    } else {
+                        throw 'Could not find screen';
                     }
                 },
                 /**
-                 * Hide a screen
+                 * Hides current screen
                  * @name hideScreen
                  * @memberOf Director
                  * @function
                  */
-                hideScreen: function (name, callback) {
-                    if (Sugar.isString(name)) {
-                        toggleScreen(name, 'hide', callback);
+                hideScreen: function () {
+                    if (!activeScreen) {
+                        return;
                     }
+                    activeScreen.onHide();
+                    activeScreen = null;
                 },
                 /*
                  * Get the active screen

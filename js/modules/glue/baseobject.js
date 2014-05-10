@@ -128,9 +128,6 @@ glue.module.create(
                     update: function (gameData) {
                         var i,
                             l;
-                        if (!active) {
-                            return;
-                        }
                         callRegistrants('update', gameData);
                         // clean up
                         removeChildren();
@@ -187,9 +184,6 @@ glue.module.create(
                             l = children.length,
                             childEvent,
                             pos;
-                        if (!active) {
-                            return;
-                        }
                         callRegistrants('pointerDown', e);
 
                         if (l) {
@@ -205,9 +199,6 @@ glue.module.create(
                             l = children.length,
                             childEvent,
                             pos;
-                        if (!active) {
-                            return;
-                        }
                         callRegistrants('pointerMove', e);
 
                         if (l) {
@@ -223,9 +214,6 @@ glue.module.create(
                             l = children.length,
                             childEvent,
                             pos;
-                        if (!active) {
-                            return;
-                        }
                         callRegistrants('pointerUp', e);
 
                         if (l) {
@@ -276,9 +264,7 @@ glue.module.create(
                         return rectangle;
                     },
                     setBoundingBox: function (value) {
-                        if (active) {
-                            rectangle = value;
-                        }
+                        rectangle = value;
                     },
                     updateBoundingBox: function () {
                         var scale = module.scalable ? module.scalable.getScale() : Vector(1, 1),
@@ -286,9 +272,6 @@ glue.module.create(
                             y1 = position.y - origin.y * scale.y,
                             x2 = position.x + (dimension.width - origin.x) * scale.x,
                             y2 = position.y + (dimension.height - origin.y) * scale.y;
-                        if (!active) {
-                            return;
-                        }
                         // swap variables if scale is negative
                         if (scale.x < 0) {
                             x2 = [x1, x1 = x2][0];
@@ -317,25 +300,11 @@ glue.module.create(
                     getOrigin: function () {
                         return origin;
                     },
-                    isActive: function () {
-                        return active;
-                    },
-                    setActive: function (value) {
-                        if (Sugar.isBoolean(value)) {
-                            active = value;
-                        } else {
-                            throw "value should be a boolean";
-                        }
-                    },
                     isVisible: function () {
                         return visible;
                     },
                     setVisible: function (value) {
-                        if (Sugar.isBoolean(value)) {
-                            visible = value;
-                        } else {
-                            throw "value should be a boolean";
-                        }
+                        visible = value;
                     },
                     addChild: function (baseObject) {
                         children.push(baseObject);

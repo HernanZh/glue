@@ -131,65 +131,22 @@ glue.module.create('glue/game', [
                 });
             }
         },
-        addObjects = function () {
-            var object,
-                callbackObject,
-                i,
-                j;
-
-            if (addedObjects.length) {
-                for (i = 0; i < addedObjects.length; ++i) {
-                    object = addedObjects[i];
-                    object.z = object.z || 0;
-                    objects.push(object);
-                    if (object.init) {
-                        object.init();
-                    }
-                };
-                addedObjects = [];
-                if (addCallbacks.length) {
-                    for (j = 0; j < addCallbacks.length; ++j) {
-                        callbackObject = addCallbacks[j];
-                        if (callbackObject) {
-                            callbackObject.callback(callbackObject.object);
-                        }
-                    };
-                    addCallbacks = [];
+        cleanObjects = function () {
+            var i;
+            // loop objects array from end to start and remove null elements
+            for (i = objects.length - 1; i >= 0; --i) {
+                if (objects[i] === null) {
+                    objects.splice(i, 1);
                 }
             }
         },
-        removeObjects = function () {
-            var object,
-                callbackObject,
-                i,
-                j;
-
-            if (removedObjects.length) {
-                for (i = 0; i < removedObjects.length; ++i) {
-                    object = removedObjects[i];
-                    if (object.destroy) {
-                        object.destroy();
-                    }
-                    Sugar.removeObject(objects, object);
-                };
-                removedObjects = [];
-                if (removeCallbacks.length) {
-                    for (j = 0; j < removeCallbacks.length; ++j) {
-                        callbackObject = removeCallbacks[j];
-                        if (callbackObject) {
-                            callbackObject.callback(callbackObject.object);
-                        }
-                    };
-                    removeCallbacks = [];
-                }
-            }
-        },
-        redraw = function () {
+        predraw = function () {
             if (useDoubleBuffering) {
                 backBufferContext2D.clear(true);
             }
             context2D.clear(true);
         },
+        postdraw = function () {},
         lastTime = new Date().getTime(),
         cumulativeTime = 0,
         minimumFps = 30,
@@ -202,10 +159,6 @@ glue.module.create('glue/game', [
                 deltaT = currentTime - lastTime;
 
             if (canvasSupported) {
-                if (useSort) {
-                    sort();
-                }
-                redraw();
                 lastTime = currentTime;
                 cumulativeTime += deltaT;
                 if (debug) {
@@ -237,21 +190,31 @@ glue.module.create('glue/game', [
                         }
                     }
                     gameData.objectLength = objects.length;
-                    removeObjects();
-                    addObjects();
                     for (i = 0; i < objects.length; ++i) {
                         component = objects[i];
+                        if (!component) {
+                            continue;
+                        }
                         if (component.update && ((isPaused && component.updateWhenPaused) || !isPaused)) {
                             component.update(gameData);
                         }
                     };
                 }
+                cleanObjects();
+                if (useSort) {
+                    sort();
+                }
+                predraw();
                 for (i = 0; i < objects.length; ++i) {
                     component = objects[i];
+                    if (!component) {
+                        continue;
+                    }
                     if (component.draw) {
                         component.draw(gameData);
                     }
                 };
+                postdraw();
 
                 if (useDoubleBuffering) {
                     context2D.save();
@@ -276,12 +239,13 @@ glue.module.create('glue/game', [
                 l,
                 component;
 
-            if (isRunning) {
-                for (i = 0, l = objects.length; i < l; ++i) {
-                    component = objects[i];
-                    if (component.pointerDown && ((isPaused && component.updateWhenPaused) || !isPaused)) {
-                        component.pointerDown(e);
-                    }
+            if (!isRunning) {
+                return;
+            }
+            for (i = 0, l = objects.length; i < l; ++i) {
+                component = objects[i];
+                if (component && component.pointerDown && ((isPaused && component.updateWhenPaused) || !isPaused)) {
+                    component.pointerDown(e);
                 }
             }
         },
@@ -291,12 +255,13 @@ glue.module.create('glue/game', [
                 l,
                 component;
 
-            if (isRunning) {
-                for (i = 0, l = objects.length; i < l; ++i) {
-                    component = objects[i];
-                    if (component.pointerMove && ((isPaused && component.updateWhenPaused) || !isPaused)) {
-                        component.pointerMove(e);
-                    }
+            if (!isRunning) {
+                return;
+            }
+            for (i = 0, l = objects.length; i < l; ++i) {
+                component = objects[i];
+                if (component && component.pointerMove && ((isPaused && component.updateWhenPaused) || !isPaused)) {
+                    component.pointerMove(e);
                 }
             }
         },
@@ -306,12 +271,13 @@ glue.module.create('glue/game', [
                 l,
                 component;
 
-            if (isRunning) {
-                for (i = 0, l = objects.length; i < l; ++i) {
-                    component = objects[i];
-                    if (component.pointerUp && ((isPaused && component.updateWhenPaused) || !isPaused)) {
-                        component.pointerUp(e);
-                    }
+            if (!isRunning) {
+                return;
+            }
+            for (i = 0, l = objects.length; i < l; ++i) {
+                component = objects[i];
+                if (component.pointerUp && ((isPaused && component.updateWhenPaused) || !isPaused)) {
+                    component.pointerUp(e);
                 }
             }
         },
@@ -423,6 +389,12 @@ glue.module.create('glue/game', [
                     if (config.game) {
                         gameInfo = config.game;
                     }
+                    if (config.predraw) {
+                        predraw = config.predraw;
+                    }
+                    if (config.postdraw) {
+                        postdraw = config.postdraw;
+                    }
                     if (config.develop && config.develop.debug) {
                         debug = true;
                         debugBar = document.createElement('div');
@@ -484,29 +456,34 @@ glue.module.create('glue/game', [
                 isRunning = false;
             },
             add: function (object, callback) {
-                if (callback) {
-                    addCallbacks.push({
-                        object: object,
-                        callback: callback
-                    });
+                object.z = object.z || 0;
+                objects.push(object);
+                if (object.init) {
+                    object.init();
                 }
-                addedObjects.push(object);
+                if (Sugar.isFunction(callback)) {
+                    callback(object);
+                }
             },
             remove: function (object, callback) {
-                if (callback) {
-                    removeCallbacks.push({
-                        object: object,
-                        callback: callback
-                    });
+                var index;
+                if (!object) {
+                    return;
                 }
-                removedObjects.push(object);
+                index = objects.indexOf(object);
+                if (index >= 0) {
+                    objects[index] = null;
+                    if (Sugar.isFunction(object.destroy)) {
+                        object.destroy();
+                    }
+                    if (Sugar.isFunction(callback)) {
+                        callback(object);
+                    }
+                }
             },
             removeAll: function () {
-                var i, l;
-                // clear removed and added arrays before removing everything
-                removedObjects.length = 0;
-                addedObjects.length = 0;
-                for (i = 0, l = objects.length; i < l; ++i) {
+                var i;
+                for (i = 0; i < objects.length; ++i) {
                     this.remove(objects[i]);
                 }
             },
@@ -518,6 +495,9 @@ glue.module.create('glue/game', [
 
                 for (i = 0, l = objects.length; i < l; ++i) {
                     component = objects[i];
+                    if (!component) {
+                        continue;
+                    }
                     name = component.getName();
                     if (!Sugar.isEmpty(name) && name === componentName) {
                         return component;
