@@ -234,7 +234,7 @@ glue.module.create('glue/game', [
             cycle(0);
         },
         pointerDown = function (e) {
-            //console.log('Pointer down: ', e.position);
+            // console.log('Pointer down: ', e.position);
             var i,
                 l,
                 component;
@@ -287,11 +287,17 @@ glue.module.create('glue/game', [
             e.position = Vector(
                 (touch.pageX - canvas.offsetLeft) / canvasScale.x, (touch.pageY - canvas.offsetTop) / canvasScale.y
             );
+            e.worldPosition = e.position.clone();
+            e.worldPosition.x += scroll.x;
+            e.worldPosition.y += scroll.y;
         },
         addMousePosition = function (e) {
             e.position = Vector(
                 (e.clientX - canvas.offsetLeft) / canvasScale.x, (e.clientY - canvas.offsetTop) / canvasScale.y
             );
+            e.worldPosition = e.position.clone();
+            e.worldPosition.x += scroll.x;
+            e.worldPosition.y += scroll.y;
         },
         touchStart = function (e) {
             e.preventDefault();
@@ -325,15 +331,12 @@ glue.module.create('glue/game', [
         },
         setupEventListeners = function () {
             // main input listeners
-            if ('ontouchstart' in win) {
-                canvas.addEventListener('touchstart', touchStart);
-                canvas.addEventListener('touchmove', touchMove);
-                canvas.addEventListener('touchend', touchEnd);
-            } else {
-                canvas.addEventListener('mousedown', mouseDown);
-                canvas.addEventListener('mousemove', mouseMove);
-                canvas.addEventListener('mouseup', mouseUp);
-            }
+            canvas.addEventListener('touchstart', touchStart);
+            canvas.addEventListener('touchmove', touchMove);
+            canvas.addEventListener('touchend', touchEnd);
+            canvas.addEventListener('mousedown', mouseDown);
+            canvas.addEventListener('mousemove', mouseMove);
+            canvas.addEventListener('mouseup', mouseUp);
             // automated test listeners
             Event.on('glue.pointer.down', pointerDown);
             Event.on('glue.pointer.move', pointerMove);

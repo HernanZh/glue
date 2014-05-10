@@ -8396,13 +8396,10 @@ glue.module.create(
                  */
                 showScreen: function (name, callback) {
                     if (activeScreen !== null) {
-                        console.log('onHide')
                         this.hideScreen();
                     }
                     activeScreen = screens[name];
-                    console.log(activeScreen)
                     if (activeScreen) {
-                        console.log('onShow')
                         activeScreen.onShow();
                     } else {
                         throw 'Could not find screen';
@@ -8734,7 +8731,7 @@ glue.module.create('glue/game', [
             cycle(0);
         },
         pointerDown = function (e) {
-            //console.log('Pointer down: ', e.position);
+            // console.log('Pointer down: ', e.position);
             var i,
                 l,
                 component;
@@ -8787,11 +8784,17 @@ glue.module.create('glue/game', [
             e.position = Vector(
                 (touch.pageX - canvas.offsetLeft) / canvasScale.x, (touch.pageY - canvas.offsetTop) / canvasScale.y
             );
+            e.worldPosition = e.position.clone();
+            e.worldPosition.x += scroll.x;
+            e.worldPosition.y += scroll.y;
         },
         addMousePosition = function (e) {
             e.position = Vector(
                 (e.clientX - canvas.offsetLeft) / canvasScale.x, (e.clientY - canvas.offsetTop) / canvasScale.y
             );
+            e.worldPosition = e.position.clone();
+            e.worldPosition.x += scroll.x;
+            e.worldPosition.y += scroll.y;
         },
         touchStart = function (e) {
             e.preventDefault();
@@ -8825,15 +8828,12 @@ glue.module.create('glue/game', [
         },
         setupEventListeners = function () {
             // main input listeners
-            if ('ontouchstart' in win) {
-                canvas.addEventListener('touchstart', touchStart);
-                canvas.addEventListener('touchmove', touchMove);
-                canvas.addEventListener('touchend', touchEnd);
-            } else {
-                canvas.addEventListener('mousedown', mouseDown);
-                canvas.addEventListener('mousemove', mouseMove);
-                canvas.addEventListener('mouseup', mouseUp);
-            }
+            canvas.addEventListener('touchstart', touchStart);
+            canvas.addEventListener('touchmove', touchMove);
+            canvas.addEventListener('touchend', touchEnd);
+            canvas.addEventListener('mousedown', mouseDown);
+            canvas.addEventListener('mousemove', mouseMove);
+            canvas.addEventListener('mouseup', mouseUp);
             // automated test listeners
             Event.on('glue.pointer.down', pointerDown);
             Event.on('glue.pointer.move', pointerMove);
@@ -9802,26 +9802,28 @@ glue.module.create(
     function () {
         'use strict';
         return function (points) {
+            var minX = points[0].x, maxX = points[0].x,
+                minY = points[0].y, maxY = points[0].y,
+                n = 1,
+                q;
+                
+                for (n = 1; n < points.length; ++n) {
+                    q = points[n];
+                    minX = Math.min(q.x, minX);
+                    maxX = Math.max(q.x, maxX);
+                    minY = Math.min(q.y, minY);
+                    maxY = Math.max(q.y, maxY);
+                }
+                        
             return {
                 get: function () {
                     return points;
                 },
                 hasPosition: function (p) {
                     var has = false,
-                        minX = points[0].x, maxX = points[0].x,
-                        minY = points[0].y, maxY = points[0].y,
-                        n = 1,
-                        q,
                         i = 0,
                         j = points.length - 1;
 
-                    for (n = 1; n < points.length; ++n) {
-                        q = points[n];
-                        minX = Math.min(q.x, minX);
-                        maxX = Math.max(q.x, maxX);
-                        minY = Math.min(q.y, minY);
-                        maxY = Math.max(q.y, maxY);
-                    }
                     if (p.x < minX || p.x > maxX || p.y < minY || p.y > maxY) {
                         return false;
                     }

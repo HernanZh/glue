@@ -10,26 +10,28 @@ glue.module.create(
     function () {
         'use strict';
         return function (points) {
+            var minX = points[0].x, maxX = points[0].x,
+                minY = points[0].y, maxY = points[0].y,
+                n = 1,
+                q;
+                
+                for (n = 1; n < points.length; ++n) {
+                    q = points[n];
+                    minX = Math.min(q.x, minX);
+                    maxX = Math.max(q.x, maxX);
+                    minY = Math.min(q.y, minY);
+                    maxY = Math.max(q.y, maxY);
+                }
+                        
             return {
                 get: function () {
                     return points;
                 },
                 hasPosition: function (p) {
                     var has = false,
-                        minX = points[0].x, maxX = points[0].x,
-                        minY = points[0].y, maxY = points[0].y,
-                        n = 1,
-                        q,
                         i = 0,
                         j = points.length - 1;
 
-                    for (n = 1; n < points.length; ++n) {
-                        q = points[n];
-                        minX = Math.min(q.x, minX);
-                        maxX = Math.max(q.x, maxX);
-                        minY = Math.min(q.y, minY);
-                        maxY = Math.max(q.y, maxY);
-                    }
                     if (p.x < minX || p.x > maxX || p.y < minY || p.y > maxY) {
                         return false;
                     }

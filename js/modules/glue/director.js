@@ -43,7 +43,6 @@ glue.module.create(
                         this.hideScreen();
                     }
                     activeScreen = screens[name];
-                    console.log(activeScreen)
                     if (activeScreen) {
                         activeScreen.onShow();
                     } else {
