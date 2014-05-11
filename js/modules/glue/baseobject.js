@@ -133,6 +133,9 @@ glue.module.create(
                         removeChildren();
                         // update children
                         for (i = 0, l = children.length; i < l; ++i) {
+                            if (!children[i].update) {
+                                continue;
+                            }
                             children[i].update(gameData);
                         }
                         ++this.timer;
@@ -174,6 +177,9 @@ glue.module.create(
                         context.translate(origin.x, origin.y);
                         // draw children
                         for (i = 0, l = children.length; i < l; ++i) {
+                            if (!children[i].draw) {
+                                continue;
+                            }
                             children[i].draw(gameData);
                         }
 
@@ -190,6 +196,9 @@ glue.module.create(
                             childEvent = transformEvent(e);
                             // pass through children
                             for (i = 0; i < l; ++i) {
+                                if (!children[i].pointerDown) {
+                                    continue;
+                                }
                                 children[i].pointerDown(childEvent);
                             }
                         }
@@ -205,6 +214,9 @@ glue.module.create(
                             childEvent = transformEvent(e);
                             // pass through children
                             for (i = 0; i < l; ++i) {
+                                if (!children[i].pointerMove) {
+                                    continue;
+                                }
                                 children[i].pointerMove(childEvent);
                             }
                         }
@@ -220,6 +232,9 @@ glue.module.create(
                             childEvent = transformEvent(e);
                             // pass through children
                             for (i = 0; i < l; ++i) {
+                                if (!children[i].pointerUp) {
+                                    continue;
+                                }
                                 children[i].pointerUp(childEvent);
                             }
                         }
@@ -261,26 +276,28 @@ glue.module.create(
                         }
                     },
                     getBoundingBox: function () {
-                        return rectangle;
+                        if (!rectangle) {
+                            var scale = module.scalable ? module.scalable.getScale() : Vector(1, 1),
+                                x1 = position.x - origin.x * scale.x,
+                                y1 = position.y - origin.y * scale.y,
+                                x2 = position.x + (dimension.width - origin.x) * scale.x,
+                                y2 = position.y + (dimension.height - origin.y) * scale.y;
+                            // swap variables if scale is negative
+                            if (scale.x < 0) {
+                                x2 = [x1, x1 = x2][0];
+                            }
+                            if (scale.y < 0) {
+                                y2 = [y1, y1 = y2][0];
+                            }
+                            return Rectangle(x1, y1, x2 - x1, y2 - y1);
+                        } else {
+                            return rectangle;
+                        }
                     },
                     setBoundingBox: function (value) {
                         rectangle = value;
                     },
-                    updateBoundingBox: function () {
-                        var scale = module.scalable ? module.scalable.getScale() : Vector(1, 1),
-                            x1 = position.x - origin.x * scale.x,
-                            y1 = position.y - origin.y * scale.y,
-                            x2 = position.x + (dimension.width - origin.x) * scale.x,
-                            y2 = position.y + (dimension.height - origin.y) * scale.y;
-                        // swap variables if scale is negative
-                        if (scale.x < 0) {
-                            x2 = [x1, x1 = x2][0];
-                        }
-                        if (scale.y < 0) {
-                            y2 = [y1, y1 = y2][0];
-                        }
-                        rectangle = Rectangle(x1, y1, x2 - x1, y2 - y1);
-                    },
+                    updateBoundingBox: function () {},
                     setOrigin: function (value) {
                         if (Sugar.isVector(value)) {
                             origin.x = Sugar.isNumber(value.x) ? value.x : origin.x;
@@ -308,7 +325,9 @@ glue.module.create(
                     },
                     addChild: function (baseObject) {
                         children.push(baseObject);
-                        baseObject.setParent(this);
+                        if (baseObject.setParent) {
+                            baseObject.setParent(this);
+                        }
 
                         if (baseObject.init) {
                             baseObject.init();

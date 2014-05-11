@@ -5099,6 +5099,7 @@ modules.glue.sugar = (function (win, doc) {
                 has(obj, 'multiply') && isFunction(obj.multiply)) {
                     return true;
             }
+            return false;
         },
         /**
          * Is a given value an array2d?
@@ -5109,10 +5110,11 @@ modules.glue.sugar = (function (win, doc) {
             if (has(obj, 'get') && isFunction(obj.get) &&
                 has(obj, 'getValue') && isFunction(obj.getValue) &&
                 has(obj, 'iterate') && isFunction(obj.iterate) &&
-                has(obj, 'set') && isFunction(obj.iterate) &&
-                has(obj, 'unset') && isFunction(obj.iterate)) {
+                has(obj, 'set') && isFunction(obj.set) &&
+                has(obj, 'unset') && isFunction(obj.unset)) {
                     return true;
             }
+            return false;
         },
         /**
          * Is a given value a string?
@@ -5146,6 +5148,34 @@ modules.glue.sugar = (function (win, doc) {
          */
         isFunction = function (value) {
             return Object.prototype.toString.call(value) === '[object Function]';
+        },
+        /**
+         * Is a given value a rectangle?
+         * @param {Object}
+         * @return {Boolean}
+         */
+        isRectangle = function (obj) {
+            if (has(obj, 'union') && isFunction(obj.union) &&
+                has(obj, 'intersect') && isFunction(obj.intersect) &&
+                has(obj, 'getX2') && isFunction(obj.getX2) &&
+                has(obj, 'getY2') && isFunction(obj.getY2)) {
+                    return true;
+            }  
+            return false;
+        },
+        /**
+         * Is a given value a polygon?
+         * @param {Object}
+         * @return {Boolean}
+         */
+        isPolygon = function (obj) {
+            if (has(obj, 'get') && isFunction(obj.get) &&
+                has(obj, 'intersect') && isFunction(obj.intersect) &&
+                has(obj, 'getBoundingBox') && isFunction(obj.getBoundingBox) &&
+                has(obj, 'hasPosition') && isFunction(obj.hasPosition)) {
+                    return true;
+            }
+            return false;
         },
         /**
          * Are the two given arrays identical (even when they have a different reference)
@@ -6079,6 +6109,8 @@ modules.glue.sugar = (function (win, doc) {
         isArray2D: isArray2D,
         isObject: isObject,
         isFunction: isFunction,
+        isRectangle: isRectangle,
+        isPolygon: isPolygon,
         emptyFn: emptyFn,
         isNumber: isNumber,
         isBoolean: isBoolean,
@@ -6365,6 +6397,9 @@ glue.module.create(
                         removeChildren();
                         // update children
                         for (i = 0, l = children.length; i < l; ++i) {
+                            if (!children[i].update) {
+                                continue;
+                            }
                             children[i].update(gameData);
                         }
                         ++this.timer;
@@ -6406,6 +6441,9 @@ glue.module.create(
                         context.translate(origin.x, origin.y);
                         // draw children
                         for (i = 0, l = children.length; i < l; ++i) {
+                            if (!children[i].draw) {
+                                continue;
+                            }
                             children[i].draw(gameData);
                         }
 
@@ -6422,6 +6460,9 @@ glue.module.create(
                             childEvent = transformEvent(e);
                             // pass through children
                             for (i = 0; i < l; ++i) {
+                                if (!children[i].pointerDown) {
+                                    continue;
+                                }
                                 children[i].pointerDown(childEvent);
                             }
                         }
@@ -6437,6 +6478,9 @@ glue.module.create(
                             childEvent = transformEvent(e);
                             // pass through children
                             for (i = 0; i < l; ++i) {
+                                if (!children[i].pointerMove) {
+                                    continue;
+                                }
                                 children[i].pointerMove(childEvent);
                             }
                         }
@@ -6452,6 +6496,9 @@ glue.module.create(
                             childEvent = transformEvent(e);
                             // pass through children
                             for (i = 0; i < l; ++i) {
+                                if (!children[i].pointerUp) {
+                                    continue;
+                                }
                                 children[i].pointerUp(childEvent);
                             }
                         }
@@ -6493,26 +6540,28 @@ glue.module.create(
                         }
                     },
                     getBoundingBox: function () {
-                        return rectangle;
+                        if (!rectangle) {
+                            var scale = module.scalable ? module.scalable.getScale() : Vector(1, 1),
+                                x1 = position.x - origin.x * scale.x,
+                                y1 = position.y - origin.y * scale.y,
+                                x2 = position.x + (dimension.width - origin.x) * scale.x,
+                                y2 = position.y + (dimension.height - origin.y) * scale.y;
+                            // swap variables if scale is negative
+                            if (scale.x < 0) {
+                                x2 = [x1, x1 = x2][0];
+                            }
+                            if (scale.y < 0) {
+                                y2 = [y1, y1 = y2][0];
+                            }
+                            return Rectangle(x1, y1, x2 - x1, y2 - y1);
+                        } else {
+                            return rectangle;
+                        }
                     },
                     setBoundingBox: function (value) {
                         rectangle = value;
                     },
-                    updateBoundingBox: function () {
-                        var scale = module.scalable ? module.scalable.getScale() : Vector(1, 1),
-                            x1 = position.x - origin.x * scale.x,
-                            y1 = position.y - origin.y * scale.y,
-                            x2 = position.x + (dimension.width - origin.x) * scale.x,
-                            y2 = position.y + (dimension.height - origin.y) * scale.y;
-                        // swap variables if scale is negative
-                        if (scale.x < 0) {
-                            x2 = [x1, x1 = x2][0];
-                        }
-                        if (scale.y < 0) {
-                            y2 = [y1, y1 = y2][0];
-                        }
-                        rectangle = Rectangle(x1, y1, x2 - x1, y2 - y1);
-                    },
+                    updateBoundingBox: function () {},
                     setOrigin: function (value) {
                         if (Sugar.isVector(value)) {
                             origin.x = Sugar.isNumber(value.x) ? value.x : origin.x;
@@ -6540,7 +6589,9 @@ glue.module.create(
                     },
                     addChild: function (baseObject) {
                         children.push(baseObject);
-                        baseObject.setParent(this);
+                        if (baseObject.setParent) {
+                            baseObject.setParent(this);
+                        }
 
                         if (baseObject.init) {
                             baseObject.init();
@@ -9815,9 +9866,14 @@ glue.module.create('glue/math/matrix', [
  *  @copyright (C) SpilGames
  *  @license BSD 3-Clause License (see LICENSE file in project root)
  */
-glue.module.create('glue/math/polygon', ['glue/math/rectangle'], function (Rectangle) {
+glue.module.create('glue/math/polygon', [
+    'glue',
+    'glue/math/rectangle'
+], function (Glue, Rectangle) {
     'use strict';
-    return function (points) {
+    var Sugar = Glue.sugar,
+        module;
+    module = function (points) {
         var minX = points[0].x,
             maxX = points[0].x,
             minY = points[0].y,
@@ -9827,8 +9883,8 @@ glue.module.create('glue/math/polygon', ['glue/math/rectangle'], function (Recta
             doLineSegmentsIntersect = function (p, p2, q, q2) {
                 // based on of https://github.com/pgkelley4/line-segments-intersect
                 var crossProduct = function (p1, p2) {
-                        return p1.x * p2.y - p1.y * p2.x;
-                    },
+                    return p1.x * p2.y - p1.y * p2.x;
+                },
                     subtractPoints = function (p1, p2) {
                         return {
                             x: p1.x - p2.x,
@@ -9887,13 +9943,36 @@ glue.module.create('glue/math/polygon', ['glue/math/rectangle'], function (Recta
             },
             intersect: function (polygon) {
                 var intersect = false,
-                    other = polygon.get(),
+                    other = [],
                     p1,
                     p2,
                     q1,
                     q2,
                     i,
                     j;
+
+                // is other really a polygon?
+                if (Sugar.isRectangle(polygon)) {
+                    other.push({
+                        x: polygon.x,
+                        y: polygon.y
+                    });
+                    other.push({
+                        x: polygon.getX2(),
+                        y: polygon.y
+                    });
+                    other.push({
+                        x: polygon.getX2(),
+                        y: polygon.getY2()
+                    });
+                    other.push({
+                        x: polygon.getX2(),
+                        y: polygon.getY2()
+                    });
+                    polygon = module(other);
+                } else {
+                    other = polygon.get();
+                }
                 // simplest check first: regard polygons as boxes and check collision
                 if (!this.getBoundingBox().intersect(polygon.getBoundingBox())) {
                     return false;
@@ -9917,9 +9996,20 @@ glue.module.create('glue/math/polygon', ['glue/math/rectangle'], function (Recta
                 } else {
                     return false;
                 }
+            },
+            offset: function (pos) {
+                var clone = [],
+                    i = points.length;
+                while (i--) {
+                    clone[i] = points[i];
+                    clone[i].x += pos.x;
+                    clone[i].y += pos.y;
+                }
+                return module(clone);
             }
         };
     };
+    return module;
 });
 /**
  *  @module Rectangle
@@ -9928,9 +10018,11 @@ glue.module.create('glue/math/polygon', ['glue/math/rectangle'], function (Recta
  *  @copyright (C) SpilGames
  *  @license BSD 3-Clause License (see LICENSE file in project root)
  */
-glue.module.create('glue/math/rectangle', function () {
+glue.module.create('glue/math/rectangle', ['glue'], function (Glue) {
     'use strict';
-    var module = function (x, y, width, height) {
+    var Sugar = Glue.sugar,
+        module;
+    module = function (x, y, width, height) {
         return {
             x: x,
             y: y,
@@ -9958,10 +10050,14 @@ glue.module.create('glue/math/rectangle', function () {
                 return module(x1, y1, x2 - x1, y2 - y1);
             },
             intersect: function (rectangle) {
-                return !(this.x + this.width <= rectangle.x ||
-                    this.y + this.height <= rectangle.y ||
-                    this.x >= rectangle.x + rectangle.width ||
-                    this.y >= rectangle.y + rectangle.height);
+                if (Sugar.isPolygon(rectangle)) {
+                    return rectangle.intersect(this);
+                } else {
+                    return !(this.x + this.width <= rectangle.x ||
+                        this.y + this.height <= rectangle.y ||
+                        this.x >= rectangle.x + rectangle.width ||
+                        this.y >= rectangle.y + rectangle.height);
+                }
             },
             intersection: function (rectangle) {
                 var inter = module(0, 0, 0, 0);
@@ -9972,6 +10068,9 @@ glue.module.create('glue/math/rectangle', function () {
                     inter.height = Math.min(this.y + this.height, rectangle.y + rectangle.height) - inter.y;
                 }
                 return inter;
+            },
+            offset: function (pos) {
+                return module(this.x + pos.x, this.y + pos.y, this.width, this.height);
             }
         };
     };
@@ -10739,6 +10838,7 @@ modules.glue.sugar = (function (win, doc) {
                 has(obj, 'multiply') && isFunction(obj.multiply)) {
                     return true;
             }
+            return false;
         },
         /**
          * Is a given value an array2d?
@@ -10749,10 +10849,11 @@ modules.glue.sugar = (function (win, doc) {
             if (has(obj, 'get') && isFunction(obj.get) &&
                 has(obj, 'getValue') && isFunction(obj.getValue) &&
                 has(obj, 'iterate') && isFunction(obj.iterate) &&
-                has(obj, 'set') && isFunction(obj.iterate) &&
-                has(obj, 'unset') && isFunction(obj.iterate)) {
+                has(obj, 'set') && isFunction(obj.set) &&
+                has(obj, 'unset') && isFunction(obj.unset)) {
                     return true;
             }
+            return false;
         },
         /**
          * Is a given value a string?
@@ -10786,6 +10887,34 @@ modules.glue.sugar = (function (win, doc) {
          */
         isFunction = function (value) {
             return Object.prototype.toString.call(value) === '[object Function]';
+        },
+        /**
+         * Is a given value a rectangle?
+         * @param {Object}
+         * @return {Boolean}
+         */
+        isRectangle = function (obj) {
+            if (has(obj, 'union') && isFunction(obj.union) &&
+                has(obj, 'intersect') && isFunction(obj.intersect) &&
+                has(obj, 'getX2') && isFunction(obj.getX2) &&
+                has(obj, 'getY2') && isFunction(obj.getY2)) {
+                    return true;
+            }  
+            return false;
+        },
+        /**
+         * Is a given value a polygon?
+         * @param {Object}
+         * @return {Boolean}
+         */
+        isPolygon = function (obj) {
+            if (has(obj, 'get') && isFunction(obj.get) &&
+                has(obj, 'intersect') && isFunction(obj.intersect) &&
+                has(obj, 'getBoundingBox') && isFunction(obj.getBoundingBox) &&
+                has(obj, 'hasPosition') && isFunction(obj.hasPosition)) {
+                    return true;
+            }
+            return false;
         },
         /**
          * Are the two given arrays identical (even when they have a different reference)
@@ -11719,6 +11848,8 @@ modules.glue.sugar = (function (win, doc) {
         isArray2D: isArray2D,
         isObject: isObject,
         isFunction: isFunction,
+        isRectangle: isRectangle,
+        isPolygon: isPolygon,
         emptyFn: emptyFn,
         isNumber: isNumber,
         isBoolean: isBoolean,

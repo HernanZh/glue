@@ -5,9 +5,11 @@
  *  @copyright (C) SpilGames
  *  @license BSD 3-Clause License (see LICENSE file in project root)
  */
-glue.module.create('glue/math/rectangle', function () {
+glue.module.create('glue/math/rectangle', ['glue'], function (Glue) {
     'use strict';
-    var module = function (x, y, width, height) {
+    var Sugar = Glue.sugar,
+        module;
+    module = function (x, y, width, height) {
         return {
             x: x,
             y: y,
@@ -35,10 +37,14 @@ glue.module.create('glue/math/rectangle', function () {
                 return module(x1, y1, x2 - x1, y2 - y1);
             },
             intersect: function (rectangle) {
-                return !(this.x + this.width <= rectangle.x ||
-                    this.y + this.height <= rectangle.y ||
-                    this.x >= rectangle.x + rectangle.width ||
-                    this.y >= rectangle.y + rectangle.height);
+                if (Sugar.isPolygon(rectangle)) {
+                    return rectangle.intersect(this);
+                } else {
+                    return !(this.x + this.width <= rectangle.x ||
+                        this.y + this.height <= rectangle.y ||
+                        this.x >= rectangle.x + rectangle.width ||
+                        this.y >= rectangle.y + rectangle.height);
+                }
             },
             intersection: function (rectangle) {
                 var inter = module(0, 0, 0, 0);
@@ -49,6 +55,9 @@ glue.module.create('glue/math/rectangle', function () {
                     inter.height = Math.min(this.y + this.height, rectangle.y + rectangle.height) - inter.y;
                 }
                 return inter;
+            },
+            offset: function (pos) {
+                return module(this.x + pos.x, this.y + pos.y, this.width, this.height);
             }
         };
     };

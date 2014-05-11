@@ -5,9 +5,14 @@
  *  @copyright (C) SpilGames
  *  @license BSD 3-Clause License (see LICENSE file in project root)
  */
-glue.module.create('glue/math/polygon', ['glue/math/rectangle'], function (Rectangle) {
+glue.module.create('glue/math/polygon', [
+    'glue',
+    'glue/math/rectangle'
+], function (Glue, Rectangle) {
     'use strict';
-    return function (points) {
+    var Sugar = Glue.sugar,
+        module;
+    module = function (points) {
         var minX = points[0].x,
             maxX = points[0].x,
             minY = points[0].y,
@@ -17,8 +22,8 @@ glue.module.create('glue/math/polygon', ['glue/math/rectangle'], function (Recta
             doLineSegmentsIntersect = function (p, p2, q, q2) {
                 // based on of https://github.com/pgkelley4/line-segments-intersect
                 var crossProduct = function (p1, p2) {
-                        return p1.x * p2.y - p1.y * p2.x;
-                    },
+                    return p1.x * p2.y - p1.y * p2.x;
+                },
                     subtractPoints = function (p1, p2) {
                         return {
                             x: p1.x - p2.x,
@@ -77,13 +82,36 @@ glue.module.create('glue/math/polygon', ['glue/math/rectangle'], function (Recta
             },
             intersect: function (polygon) {
                 var intersect = false,
-                    other = polygon.get(),
+                    other = [],
                     p1,
                     p2,
                     q1,
                     q2,
                     i,
                     j;
+
+                // is other really a polygon?
+                if (Sugar.isRectangle(polygon)) {
+                    other.push({
+                        x: polygon.x,
+                        y: polygon.y
+                    });
+                    other.push({
+                        x: polygon.getX2(),
+                        y: polygon.y
+                    });
+                    other.push({
+                        x: polygon.getX2(),
+                        y: polygon.getY2()
+                    });
+                    other.push({
+                        x: polygon.getX2(),
+                        y: polygon.getY2()
+                    });
+                    polygon = module(other);
+                } else {
+                    other = polygon.get();
+                }
                 // simplest check first: regard polygons as boxes and check collision
                 if (!this.getBoundingBox().intersect(polygon.getBoundingBox())) {
                     return false;
@@ -107,7 +135,18 @@ glue.module.create('glue/math/polygon', ['glue/math/rectangle'], function (Recta
                 } else {
                     return false;
                 }
+            },
+            offset: function (pos) {
+                var clone = [],
+                    i = points.length;
+                while (i--) {
+                    clone[i] = points[i];
+                    clone[i].x += pos.x;
+                    clone[i].y += pos.y;
+                }
+                return module(clone);
             }
         };
     };
+    return module;
 });

@@ -40,6 +40,7 @@ modules.glue.sugar = (function (win, doc) {
                 has(obj, 'multiply') && isFunction(obj.multiply)) {
                     return true;
             }
+            return false;
         },
         /**
          * Is a given value an array2d?
@@ -50,10 +51,11 @@ modules.glue.sugar = (function (win, doc) {
             if (has(obj, 'get') && isFunction(obj.get) &&
                 has(obj, 'getValue') && isFunction(obj.getValue) &&
                 has(obj, 'iterate') && isFunction(obj.iterate) &&
-                has(obj, 'set') && isFunction(obj.iterate) &&
-                has(obj, 'unset') && isFunction(obj.iterate)) {
+                has(obj, 'set') && isFunction(obj.set) &&
+                has(obj, 'unset') && isFunction(obj.unset)) {
                     return true;
             }
+            return false;
         },
         /**
          * Is a given value a string?
@@ -87,6 +89,34 @@ modules.glue.sugar = (function (win, doc) {
          */
         isFunction = function (value) {
             return Object.prototype.toString.call(value) === '[object Function]';
+        },
+        /**
+         * Is a given value a rectangle?
+         * @param {Object}
+         * @return {Boolean}
+         */
+        isRectangle = function (obj) {
+            if (has(obj, 'union') && isFunction(obj.union) &&
+                has(obj, 'intersect') && isFunction(obj.intersect) &&
+                has(obj, 'getX2') && isFunction(obj.getX2) &&
+                has(obj, 'getY2') && isFunction(obj.getY2)) {
+                    return true;
+            }  
+            return false;
+        },
+        /**
+         * Is a given value a polygon?
+         * @param {Object}
+         * @return {Boolean}
+         */
+        isPolygon = function (obj) {
+            if (has(obj, 'get') && isFunction(obj.get) &&
+                has(obj, 'intersect') && isFunction(obj.intersect) &&
+                has(obj, 'getBoundingBox') && isFunction(obj.getBoundingBox) &&
+                has(obj, 'hasPosition') && isFunction(obj.hasPosition)) {
+                    return true;
+            }
+            return false;
         },
         /**
          * Are the two given arrays identical (even when they have a different reference)
@@ -1020,6 +1050,8 @@ modules.glue.sugar = (function (win, doc) {
         isArray2D: isArray2D,
         isObject: isObject,
         isFunction: isFunction,
+        isRectangle: isRectangle,
+        isPolygon: isPolygon,
         emptyFn: emptyFn,
         isNumber: isNumber,
         isBoolean: isBoolean,
