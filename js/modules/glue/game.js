@@ -508,6 +508,24 @@ glue.module.create('glue/game', [
                 }
                 return null;
             },
+            getByName: function (componentName) {
+                var i,
+                    component,
+                    name,
+                    array = [];
+
+                for (i = 0; i < objects.length; ++i) {
+                    component = objects[i];
+                    if (!component) {
+                        continue;
+                    }
+                    name = component.getName();
+                    if (!Sugar.isEmpty(name) && name === componentName) {
+                        array.push(component);
+                    }
+                }
+                return array;
+            },
             canvas: {
                 getDimension: function () {
                     return canvasDimension;
