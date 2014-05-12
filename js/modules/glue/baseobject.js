@@ -116,6 +116,7 @@ glue.module.create(
                 },
                 module = {
                     timer: 0,
+                    types: [],
                     add: function (object) {
                         return Sugar.combine(this, object);
                     },

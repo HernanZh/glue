@@ -6377,6 +6377,7 @@ glue.module.create(
                 },
                 module = {
                     timer: 0,
+                    types: [],
                     add: function (object) {
                         return Sugar.combine(this, object);
                     },
@@ -8604,6 +8605,7 @@ glue.module.create('glue/game', [
         autoResize = true,
         smoothing = false,
         gameData = {},
+        quickAccess = {},
         initCanvas = function () {
             canvas = document.querySelector('#' + canvasId);
             // create canvas if it doesn't exist
@@ -9016,18 +9018,26 @@ glue.module.create('glue/game', [
                 shutdown();
                 isRunning = false;
             },
-            add: function (object, callback) {
+            add: function (object) {
+                var i, type;
                 object.z = object.z || 0;
                 objects.push(object);
                 if (object.init) {
                     object.init();
                 }
-                if (Sugar.isFunction(callback)) {
-                    callback(object);
+                // add object to access pools
+                if (object.types) {
+                    for (i = 0; i < object.types.length; ++i) {
+                        type = object.types[i];
+                        if (!quickAccess[type]) {
+                            quickAccess[type] = [];
+                        }
+                        quickAccess[type].push(object);
+                    }
                 }
             },
-            remove: function (object, callback) {
-                var index;
+            remove: function (object) {
+                var i, type, index;
                 if (!object) {
                     return;
                 }
@@ -9037,8 +9047,12 @@ glue.module.create('glue/game', [
                     if (Sugar.isFunction(object.destroy)) {
                         object.destroy();
                     }
-                    if (Sugar.isFunction(callback)) {
-                        callback(object);
+                }
+                // remove from access pools
+                if (object.types) {
+                    for (i = 0; i < object.types.length; ++i) {
+                        type = object.types[i];
+                        Sugar.removeObject(quickAccess[type], object);
                     }
                 }
             },
@@ -9083,6 +9097,9 @@ glue.module.create('glue/game', [
                     }
                 }
                 return array;
+            },
+            getByType: function (type) {
+                return quickAccess[type];
             },
             canvas: {
                 getDimension: function () {
