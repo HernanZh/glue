@@ -257,13 +257,6 @@ glue.module.create(
                         if (Sugar.isVector(value)) {
                             position.x = value.x;
                             position.y = value.y;
-                            this.updateBoundingBox();
-                        }
-                    },
-                    setPositionObject: function (value) {
-                        if (Sugar.isVector(value)) {
-                            position = value;
-                            this.updateBoundingBox();
                         }
                     },
                     getDimension: function () {
@@ -272,7 +265,6 @@ glue.module.create(
                     setDimension: function (value) {
                         if (Sugar.isDimension(value)) {
                             dimension = value;
-                            this.updateBoundingBox();
                         }
                     },
                     getBoundingBox: function () {
@@ -291,18 +283,24 @@ glue.module.create(
                             }
                             return Rectangle(x1, y1, x2 - x1, y2 - y1);
                         } else {
-                            return rectangle;
+                            var box = rectangle.clone();
+                                scale = module.scalable ? module.scalable.getScale() : Vector(1, 1);
+                            box.x *= Math.abs(scale.x);
+                            box.y *= Math.abs(scale.y);
+                            box.width *= Math.abs(scale.x);
+                            box.height *= Math.abs(scale.y);
+                            box.x += position.x;
+                            box.y += position.y;
+                            return box;
                         }
                     },
                     setBoundingBox: function (value) {
                         rectangle = value;
                     },
-                    updateBoundingBox: function () {},
                     setOrigin: function (value) {
                         if (Sugar.isVector(value)) {
                             origin.x = Sugar.isNumber(value.x) ? value.x : origin.x;
                             origin.y = Sugar.isNumber(value.y) ? value.y : origin.y;
-                            this.updateBoundingBox();
                         }
                     },
                     setOriginRelative: function (value) {
@@ -311,7 +309,6 @@ glue.module.create(
                             dimension = this.getDimension();
                             origin.x = value.x * dimension.width;
                             origin.y = value.y * dimension.height;
-                            this.updateBoundingBox();
                         }
                     },
                     getOrigin: function () {

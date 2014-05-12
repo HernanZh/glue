@@ -151,6 +151,14 @@ glue.module.create('glue/math/polygon', [
                     clone[i].y += pos.y;
                 }
                 return module(clone);
+            },
+            clone: function () {
+                var clone = [],
+                    i = points.length;
+                while (i--) {
+                    clone[i] = points[i];
+                }
+                return module(clone);
             }
         };
     };

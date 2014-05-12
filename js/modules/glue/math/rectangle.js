@@ -58,6 +58,9 @@ glue.module.create('glue/math/rectangle', ['glue'], function (Glue) {
             },
             offset: function (pos) {
                 return module(this.x + pos.x, this.y + pos.y, this.width, this.height);
+            },
+            clone: function () {
+                return module(this.x, this.y, this.width, this.height);
             }
         };
     };

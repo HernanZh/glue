@@ -6518,13 +6518,6 @@ glue.module.create(
                         if (Sugar.isVector(value)) {
                             position.x = value.x;
                             position.y = value.y;
-                            this.updateBoundingBox();
-                        }
-                    },
-                    setPositionObject: function (value) {
-                        if (Sugar.isVector(value)) {
-                            position = value;
-                            this.updateBoundingBox();
                         }
                     },
                     getDimension: function () {
@@ -6533,7 +6526,6 @@ glue.module.create(
                     setDimension: function (value) {
                         if (Sugar.isDimension(value)) {
                             dimension = value;
-                            this.updateBoundingBox();
                         }
                     },
                     getBoundingBox: function () {
@@ -6552,18 +6544,24 @@ glue.module.create(
                             }
                             return Rectangle(x1, y1, x2 - x1, y2 - y1);
                         } else {
-                            return rectangle;
+                            var box = rectangle.clone();
+                                scale = module.scalable ? module.scalable.getScale() : Vector(1, 1);
+                            box.x *= Math.abs(scale.x);
+                            box.y *= Math.abs(scale.y);
+                            box.width *= Math.abs(scale.x);
+                            box.height *= Math.abs(scale.y);
+                            box.x += position.x;
+                            box.y += position.y;
+                            return box;
                         }
                     },
                     setBoundingBox: function (value) {
                         rectangle = value;
                     },
-                    updateBoundingBox: function () {},
                     setOrigin: function (value) {
                         if (Sugar.isVector(value)) {
                             origin.x = Sugar.isNumber(value.x) ? value.x : origin.x;
                             origin.y = Sugar.isNumber(value.y) ? value.y : origin.y;
-                            this.updateBoundingBox();
                         }
                     },
                     setOriginRelative: function (value) {
@@ -6572,7 +6570,6 @@ glue.module.create(
                             dimension = this.getDimension();
                             origin.x = value.x * dimension.width;
                             origin.y = value.y * dimension.height;
-                            this.updateBoundingBox();
                         }
                     },
                     getOrigin: function () {
@@ -6690,10 +6687,18 @@ glue.module.create('glue/component/animatable', [
                 animations = animationSettings.animations;
                 spritable.setup(settings);
                 image = settings.image;
-                frameCountX = animationSettings.frameCountX;
-                frameCountY = animationSettings.frameCountY;
-                frameWidth = settings.image.width / frameCountX;
-                frameHeight = settings.image.height / frameCountY;
+                // use frameWidth if specified (overrides frameCountX and frameCountY)
+                if (animationSettings.frameWidth && animationSettings.frameHeight) {
+                    frameWidth = animationSettings.frameWidth;
+                    frameHeight = animationSettings.frameHeight;
+                    frameCountX = Math.floor(settings.image.naturalWidth / frameWidth);
+                    frameCountY = Math.floor(settings.image.naturalHeight / frameHeight);
+                } else {
+                    frameCountX = animationSettings.frameCountX;
+                    frameCountY = animationSettings.frameCountY;
+                    frameWidth = settings.image.width / frameCountX;
+                    frameHeight = settings.image.height / frameCountY;
+                }
                 // set dimension of base object
                 object.getDimension().width = frameWidth;
                 object.getDimension().height = frameHeight;
@@ -6707,16 +6712,22 @@ glue.module.create('glue/component/animatable', [
                 }
                 reachedEnd = false;
                 currentFrame += currentAnimation.imageSpeed || 1;
-                while (currentFrame >= currentAnimation.frames.length) {
-                    currentFrame -= currentAnimation.frames.length;
-                    reachedEnd = true;
+                if (currentAnimation.loop) {
+                    while (currentFrame >= currentAnimation.frames.length) {
+                        currentFrame -= currentAnimation.frames.length;
+                        reachedEnd = true;
+                    }
+                } else {
+                    if (currentFrame >= currentAnimation.frames.length) {
+                        reachedEnd = true;
+                    }
                 }
                 if (reachedEnd && onCompleteCallback) {
                     onCompleteCallback();
                 }
             },
             draw: function (gameData) {
-                var cf = Math.floor(currentFrame),
+                var cf = Math.min(Math.floor(currentFrame), currentAnimation.frames.length - 1),
                     sx = (currentAnimation.frames[cf] % frameCountX) * frameWidth,
                     sy = Math.floor(currentAnimation.frames[cf] / frameCountX) * frameHeight;
 
@@ -6735,10 +6746,13 @@ glue.module.create('glue/component/animatable', [
             setAnimation: function (name, callback) {
                 var anim = animations[name];
                 if (anim && currentAnimation !== anim) {
+                    if (!Sugar.isDefined(anim.loop)) {
+                        anim.loop = true;
+                    }
                     // set even if there is no callback
                     onCompleteCallback = callback;
                     currentAnimation = anim;
-                    setAnimation();
+                    currentFrame = 0;
                 }
             },
             getFrameWidth: function () {
@@ -8092,7 +8106,6 @@ glue.module.create(
                     currentScale.y = Sugar.isNumber(vec.y) ? vec.y : currentScale.y;
                     targetScale.x = Sugar.isNumber(vec.x) ? vec.x : targetScale.x;
                     targetScale.y = Sugar.isNumber(vec.y) ? vec.y : targetScale.y;
-                    object.updateBoundingBox();
                 },
                 setTarget: function (vec) {
                     targetScale.x = Sugar.isNumber(vec.x) ? vec.x : targetScale.x;
@@ -10009,6 +10022,14 @@ glue.module.create('glue/math/polygon', [
                     clone[i].y += pos.y;
                 }
                 return module(clone);
+            },
+            clone: function () {
+                var clone = [],
+                    i = points.length;
+                while (i--) {
+                    clone[i] = points[i];
+                }
+                return module(clone);
             }
         };
     };
@@ -10074,6 +10095,9 @@ glue.module.create('glue/math/rectangle', ['glue'], function (Glue) {
             },
             offset: function (pos) {
                 return module(this.x + pos.x, this.y + pos.y, this.width, this.height);
+            },
+            clone: function () {
+                return module(this.x, this.y, this.width, this.height);
             }
         };
     };

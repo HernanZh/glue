@@ -69,10 +69,18 @@ glue.module.create('glue/component/animatable', [
                 animations = animationSettings.animations;
                 spritable.setup(settings);
                 image = settings.image;
-                frameCountX = animationSettings.frameCountX;
-                frameCountY = animationSettings.frameCountY;
-                frameWidth = settings.image.width / frameCountX;
-                frameHeight = settings.image.height / frameCountY;
+                // use frameWidth if specified (overrides frameCountX and frameCountY)
+                if (animationSettings.frameWidth && animationSettings.frameHeight) {
+                    frameWidth = animationSettings.frameWidth;
+                    frameHeight = animationSettings.frameHeight;
+                    frameCountX = Math.floor(settings.image.naturalWidth / frameWidth);
+                    frameCountY = Math.floor(settings.image.naturalHeight / frameHeight);
+                } else {
+                    frameCountX = animationSettings.frameCountX;
+                    frameCountY = animationSettings.frameCountY;
+                    frameWidth = settings.image.width / frameCountX;
+                    frameHeight = settings.image.height / frameCountY;
+                }
                 // set dimension of base object
                 object.getDimension().width = frameWidth;
                 object.getDimension().height = frameHeight;
@@ -86,16 +94,22 @@ glue.module.create('glue/component/animatable', [
                 }
                 reachedEnd = false;
                 currentFrame += currentAnimation.imageSpeed || 1;
-                while (currentFrame >= currentAnimation.frames.length) {
-                    currentFrame -= currentAnimation.frames.length;
-                    reachedEnd = true;
+                if (currentAnimation.loop) {
+                    while (currentFrame >= currentAnimation.frames.length) {
+                        currentFrame -= currentAnimation.frames.length;
+                        reachedEnd = true;
+                    }
+                } else {
+                    if (currentFrame >= currentAnimation.frames.length) {
+                        reachedEnd = true;
+                    }
                 }
                 if (reachedEnd && onCompleteCallback) {
                     onCompleteCallback();
                 }
             },
             draw: function (gameData) {
-                var cf = Math.floor(currentFrame),
+                var cf = Math.min(Math.floor(currentFrame), currentAnimation.frames.length - 1),
                     sx = (currentAnimation.frames[cf] % frameCountX) * frameWidth,
                     sy = Math.floor(currentAnimation.frames[cf] / frameCountX) * frameHeight;
 
@@ -114,10 +128,13 @@ glue.module.create('glue/component/animatable', [
             setAnimation: function (name, callback) {
                 var anim = animations[name];
                 if (anim && currentAnimation !== anim) {
+                    if (!Sugar.isDefined(anim.loop)) {
+                        anim.loop = true;
+                    }
                     // set even if there is no callback
                     onCompleteCallback = callback;
                     currentAnimation = anim;
-                    setAnimation();
+                    currentFrame = 0;
                 }
             },
             getFrameWidth: function () {
