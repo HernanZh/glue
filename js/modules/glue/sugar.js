@@ -96,10 +96,8 @@ modules.glue.sugar = (function (win, doc) {
          * @return {Boolean}
          */
         isRectangle = function (obj) {
-            if (has(obj, 'union') && isFunction(obj.union) &&
-                has(obj, 'intersect') && isFunction(obj.intersect) &&
-                has(obj, 'getX2') && isFunction(obj.getX2) &&
-                has(obj, 'getY2') && isFunction(obj.getY2)) {
+            if (isFunction(obj.union) &&
+                isFunction(obj.getX2)) {
                     return true;
             }  
             return false;
@@ -110,10 +108,9 @@ modules.glue.sugar = (function (win, doc) {
          * @return {Boolean}
          */
         isPolygon = function (obj) {
-            if (has(obj, 'get') && isFunction(obj.get) &&
-                has(obj, 'intersect') && isFunction(obj.intersect) &&
-                has(obj, 'getBoundingBox') && isFunction(obj.getBoundingBox) &&
-                has(obj, 'hasPosition') && isFunction(obj.hasPosition)) {
+            if (isFunction(obj.get) &&
+                isFunction(obj.getBoundingBox) &&
+                isFunction(obj.hasPosition)) {
                     return true;
             }
             return false;

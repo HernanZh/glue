@@ -92,6 +92,11 @@ glue.module.create('glue/math/polygon', [
 
                 // is other really a polygon?
                 if (Sugar.isRectangle(polygon)) {
+                    // before constructing a polygon, check if boxes collide in the first place 
+                    if (!this.getBoundingBox().intersect(polygon)) {
+                        return false;
+                    }
+                    // construct a polygon out of rectangle
                     other.push({
                         x: polygon.x,
                         y: polygon.y
@@ -110,11 +115,12 @@ glue.module.create('glue/math/polygon', [
                     });
                     polygon = module(other);
                 } else {
+                    // simplest check first: regard polygons as boxes and check collision
+                    if (!this.getBoundingBox().intersect(polygon.getBoundingBox())) {
+                        return false;
+                    }
+                    // get polygon points
                     other = polygon.get();
-                }
-                // simplest check first: regard polygons as boxes and check collision
-                if (!this.getBoundingBox().intersect(polygon.getBoundingBox())) {
-                    return false;
                 }
 
                 // precision check

@@ -5155,10 +5155,8 @@ modules.glue.sugar = (function (win, doc) {
          * @return {Boolean}
          */
         isRectangle = function (obj) {
-            if (has(obj, 'union') && isFunction(obj.union) &&
-                has(obj, 'intersect') && isFunction(obj.intersect) &&
-                has(obj, 'getX2') && isFunction(obj.getX2) &&
-                has(obj, 'getY2') && isFunction(obj.getY2)) {
+            if (isFunction(obj.union) &&
+                isFunction(obj.getX2)) {
                     return true;
             }  
             return false;
@@ -5169,10 +5167,9 @@ modules.glue.sugar = (function (win, doc) {
          * @return {Boolean}
          */
         isPolygon = function (obj) {
-            if (has(obj, 'get') && isFunction(obj.get) &&
-                has(obj, 'intersect') && isFunction(obj.intersect) &&
-                has(obj, 'getBoundingBox') && isFunction(obj.getBoundingBox) &&
-                has(obj, 'hasPosition') && isFunction(obj.hasPosition)) {
+            if (isFunction(obj.get) &&
+                isFunction(obj.getBoundingBox) &&
+                isFunction(obj.hasPosition)) {
                     return true;
             }
             return false;
@@ -9953,6 +9950,11 @@ glue.module.create('glue/math/polygon', [
 
                 // is other really a polygon?
                 if (Sugar.isRectangle(polygon)) {
+                    // before constructing a polygon, check if boxes collide in the first place 
+                    if (!this.getBoundingBox().intersect(polygon)) {
+                        return false;
+                    }
+                    // construct a polygon out of rectangle
                     other.push({
                         x: polygon.x,
                         y: polygon.y
@@ -9971,11 +9973,12 @@ glue.module.create('glue/math/polygon', [
                     });
                     polygon = module(other);
                 } else {
+                    // simplest check first: regard polygons as boxes and check collision
+                    if (!this.getBoundingBox().intersect(polygon.getBoundingBox())) {
+                        return false;
+                    }
+                    // get polygon points
                     other = polygon.get();
-                }
-                // simplest check first: regard polygons as boxes and check collision
-                if (!this.getBoundingBox().intersect(polygon.getBoundingBox())) {
-                    return false;
                 }
 
                 // precision check
@@ -10894,10 +10897,8 @@ modules.glue.sugar = (function (win, doc) {
          * @return {Boolean}
          */
         isRectangle = function (obj) {
-            if (has(obj, 'union') && isFunction(obj.union) &&
-                has(obj, 'intersect') && isFunction(obj.intersect) &&
-                has(obj, 'getX2') && isFunction(obj.getX2) &&
-                has(obj, 'getY2') && isFunction(obj.getY2)) {
+            if (isFunction(obj.union) &&
+                isFunction(obj.getX2)) {
                     return true;
             }  
             return false;
@@ -10908,10 +10909,9 @@ modules.glue.sugar = (function (win, doc) {
          * @return {Boolean}
          */
         isPolygon = function (obj) {
-            if (has(obj, 'get') && isFunction(obj.get) &&
-                has(obj, 'intersect') && isFunction(obj.intersect) &&
-                has(obj, 'getBoundingBox') && isFunction(obj.getBoundingBox) &&
-                has(obj, 'hasPosition') && isFunction(obj.hasPosition)) {
+            if (isFunction(obj.get) &&
+                isFunction(obj.getBoundingBox) &&
+                isFunction(obj.hasPosition)) {
                     return true;
             }
             return false;
