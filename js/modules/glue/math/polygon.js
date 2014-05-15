@@ -110,7 +110,7 @@ glue.module.create('glue/math/polygon', [
                         y: polygon.getY2()
                     });
                     other.push({
-                        x: polygon.x(),
+                        x: polygon.x,
                         y: polygon.getY2()
                     });
                     polygon = module(other);
