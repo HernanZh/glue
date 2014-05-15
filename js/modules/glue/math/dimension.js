@@ -1,28 +1,9 @@
 /**
- *  @module Dimension
- *  @namespace math
- *  @desc Represents a dimension
- *  @copyright (C) SpilGames
- *  @license BSD 3-Clause License (see LICENSE file in project root)
+ *  Deprecated
  */
-glue.module.create(
-    'glue/math/dimension',
-    function () {
-        'use strict';
-        return function (width, height, depth) {
-            var dimension = {
-                width: width,
-                height: height,
-                depth: depth || 0
-            };
-            return {
-                width: dimension.width,
-                height: dimension.height,
-                depth: dimension.depth,
-                get: function () {
-                    return dimension;
-                }
-            };
-        };
-    }
-);
+glue.module.create('glue/math/dimension', ['glue/math/rectangle'], function (Rectangle) {
+    'use strict';
+    return function (width, height) {
+        return Rectangle(0, 0, width, height);
+    };
+});
