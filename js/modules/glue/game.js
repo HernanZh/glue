@@ -282,8 +282,8 @@ glue.module.create('glue/game', [
                 }
             }
         },
-        addTouchPosition = function (e, isTouchEnd) {
-            var touch = !isTouchEnd ? e.targetTouches[0] : e.changedTouches[0];
+        addTouchPosition = function (e, n, isTouchEnd) {
+            var touch = !isTouchEnd ? e.targetTouches[n] : e.changedTouches[n];
             e.preventDefault();
             e.position = Vector(
                 (touch.pageX - canvas.offsetLeft) / canvasScale.x, (touch.pageY - canvas.offsetTop) / canvasScale.y
@@ -301,19 +301,31 @@ glue.module.create('glue/game', [
             e.worldPosition.y += scroll.y;
         },
         touchStart = function (e) {
+            var id, i;
             e.preventDefault();
-            addTouchPosition(e);
-            pointerDown(e);
+            for (i = 0; i < e.targetTouches.length; ++i) {
+                addTouchPosition(e, i);
+                e.identifier = e.targetTouches[i].identifier;
+                pointerDown(e);
+            }
         },
         touchMove = function (e) {
+            var id, i;
             e.preventDefault();
-            addTouchPosition(e);
-            pointerMove(e);
+            for (i = 0; i < e.targetTouches.length; ++i) {
+                addTouchPosition(e, i);
+                e.identifier = e.targetTouches[i].identifier;
+                pointerMove(e);
+            }
         },
         touchEnd = function (e) {
+            var id, i;
             e.preventDefault();
-            addTouchPosition(e, true);
-            pointerUp(e);
+            for (i = 0; i < e.changedTouches.length; ++i) {
+                addTouchPosition(e, i, true);
+                e.identifier = e.changedTouches[i].identifier;
+                pointerUp(e);
+            }
         },
         mouseDown = function (e) {
             e.preventDefault();
