@@ -137,6 +137,9 @@ glue.module.create('glue/component/animatable', [
                     currentFrame = 0;
                 }
             },
+            setFrame: function (frameNumber) {
+                currentFrame = frameNumber;
+            },
             getFrameWidth: function () {
                 return frameWidth;
             },
