@@ -345,6 +345,9 @@ glue.module.create(
                     },
                     getID: function () {
                         return uniqueID;
+                    },
+                    collidesWith: function (other) {
+                        return this.getBoundingBox().intersect(other.getBoundingBox());
                     }
                 };
 
