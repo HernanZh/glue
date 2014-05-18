@@ -30,14 +30,7 @@ glue.module.create('glue/component/animatable', [
             image,
             onCompleteCallback,
             frameCountX,
-            frameCountY,
-            setAnimation = function () {
-                if (!image) {
-                    spritable.setImage(currentAnimation.image);
-                    image = currentAnimation.image;
-                }
-                currentFrame = 0;
-            };
+            frameCountY;
 
         baseComponent.set({
             setup: function (settings) {
@@ -125,7 +118,7 @@ glue.module.create('glue/component/animatable', [
                     frameHeight
                 );
             },
-            setAnimation: function (name, callback) {
+            setAnimation: function (name, callback, keepCurrentFrame) {
                 var anim = animations[name];
                 if (anim && currentAnimation !== anim) {
                     if (!Sugar.isDefined(anim.loop)) {
@@ -134,7 +127,9 @@ glue.module.create('glue/component/animatable', [
                     // set even if there is no callback
                     onCompleteCallback = callback;
                     currentAnimation = anim;
-                    currentFrame = 0;
+                    if (!keepCurrentFrame) {
+                        currentFrame = 0;
+                    }
                 }
             },
             setFrame: function (frameNumber) {
