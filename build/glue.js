@@ -6559,6 +6559,9 @@ glue.module.create(
                     setBoundingBox: function (value) {
                         rectangle = value;
                     },
+                    getRectangle: function () {
+                        return rectangle;
+                    },
                     setOrigin: function (value) {
                         if (Sugar.isVector(value)) {
                             origin.x = Sugar.isNumber(value.x) ? value.x : origin.x;
