@@ -354,6 +354,21 @@ glue.module.create(
                     },
                     collidesWith: function (other) {
                         return this.getBoundingBox().intersect(other.getBoundingBox());
+                    },
+                    collidesWithGroup: function (array) {
+                        var i,
+                            obj,
+                            box = this.getBoundingBox();
+                        if (!Sugar.isArray(array)) {
+                            throw 'Collision check must be with an Array of object';
+                        }
+                        for (i = 0; i < array.length; ++i) {
+                            obj = array[i];
+                            if (obj.getBoundingBox && box.intersect(obj.getBoundingBox())) {
+                                return obj;
+                            }
+                        }
+                        return null;
                     }
                 };
 
