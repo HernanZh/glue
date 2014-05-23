@@ -6376,7 +6376,10 @@ glue.module.create(
                 },
                 module = {
                     timer: 0,
-                    types: [],
+                    family: [],
+                    addToFamily: function (name) {
+                        family.push(name);
+                    },
                     add: function (object) {
                         return Sugar.combine(this, object);
                     },
@@ -9041,9 +9044,9 @@ glue.module.create('glue/game', [
                     object.init();
                 }
                 // add object to access pools
-                if (object.types) {
-                    for (i = 0; i < object.types.length; ++i) {
-                        type = object.types[i];
+                if (object.family) {
+                    for (i = 0; i < object.family.length; ++i) {
+                        type = object.family[i];
                         if (!quickAccess[type]) {
                             quickAccess[type] = [];
                         }
@@ -9064,9 +9067,9 @@ glue.module.create('glue/game', [
                     }
                 }
                 // remove from access pools
-                if (object.types) {
-                    for (i = 0; i < object.types.length; ++i) {
-                        type = object.types[i];
+                if (object.family) {
+                    for (i = 0; i < object.family.length; ++i) {
+                        type = object.family[i];
                         Sugar.removeObject(quickAccess[type], object);
                     }
                 }
@@ -9113,7 +9116,7 @@ glue.module.create('glue/game', [
                 }
                 return array;
             },
-            getByType: function (type) {
+            getByFamily: function (type) {
                 return quickAccess[type];
             },
             canvas: {

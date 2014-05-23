@@ -116,7 +116,10 @@ glue.module.create(
                 },
                 module = {
                     timer: 0,
-                    types: [],
+                    family: [],
+                    addToFamily: function (name) {
+                        family.push(name);
+                    },
                     add: function (object) {
                         return Sugar.combine(this, object);
                     },
