@@ -26,7 +26,7 @@ glue.module.create('glue/math/vector', [
             },
             substract: function (vector) {
                 var v = this.clone();
-                v.substract(vector);
+                v.substractFrom(vector);
                 return v;
             },
             substractFrom: function (vector) {
@@ -80,8 +80,8 @@ glue.module.create('glue/math/vector', [
                 this.y /= length;
                 return this;
             },
-            distanceBetween: function (vector) {
-                return vector.substract(this).length;
+            distance: function (vector) {
+                return vector.substract(this).length();
             },
             clone: function () {
                 return module(this.x, this.y);
