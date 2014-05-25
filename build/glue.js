@@ -8764,12 +8764,12 @@ glue.module.create('glue/game', [
                 gameData.avg = avg;
                 while (cumulativeTime >= 1000 / 60) {
                     cumulativeTime -= 1000 / 60;
-                    if (cumulativeTime > 1000 / minimumFps) {
+                    /*if (cumulativeTime > 1000 / minimumFps) {
                         // deplete cumulative time
                         while (cumulativeTime >= 1000 / 60) {
                             cumulativeTime -= 1000 / 60;
                         }
-                    }
+                    }*/
                     gameData.objectLength = objects.length;
                     for (i = 0; i < objects.length; ++i) {
                         component = objects[i];
