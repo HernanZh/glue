@@ -6619,6 +6619,9 @@ glue.module.create(
                         var i,
                             obj,
                             box = this.getBoundingBox();
+                        if (Sugar.isEmpty(array)) {
+                            return null;
+                        }
                         if (!Sugar.isArray(array)) {
                             throw 'Collision check must be with an Array of object';
                         }
