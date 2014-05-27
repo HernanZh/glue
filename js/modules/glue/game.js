@@ -150,7 +150,7 @@ glue.module.create('glue/game', [
         postdraw = function () {},
         lastTime = new Date().getTime(),
         cumulativeTime = 0,
-        minimumFps = 10,
+        minimumFps = 30,
         cycle = function (time) {
             var fps,
                 component,
@@ -425,6 +425,9 @@ glue.module.create('glue/game', [
                     }
                     if (Sugar.isDefined(config.autoResize)) {
                         autoResize = config.autoResize;
+                    }
+                    if (Sugar.isDefined(config.minimumFps)) {
+                        minimumFps = config.minimumFps;
                     }
                     if (Sugar.isDefined(config.sortType)) {
                         sortType = config.sortType;
