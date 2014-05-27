@@ -6596,6 +6596,7 @@ glue.module.create(
                         if (baseObject.init) {
                             baseObject.init();
                         }
+                        return module;
                     },
                     removeChild: function (baseObject) {
                         removedChildren.push(baseObject);
@@ -8733,7 +8734,7 @@ glue.module.create('glue/game', [
         postdraw = function () {},
         lastTime = new Date().getTime(),
         cumulativeTime = 0,
-        minimumFps = 30,
+        minimumFps = 10,
         cycle = function (time) {
             var fps,
                 component,
@@ -8767,12 +8768,12 @@ glue.module.create('glue/game', [
                 gameData.avg = avg;
                 while (cumulativeTime >= 1000 / 60) {
                     cumulativeTime -= 1000 / 60;
-                    /*if (cumulativeTime > 1000 / minimumFps) {
+                    if (cumulativeTime > 1000 / minimumFps) {
                         // deplete cumulative time
                         while (cumulativeTime >= 1000 / 60) {
                             cumulativeTime -= 1000 / 60;
                         }
-                    }*/
+                    }
                     gameData.objectLength = objects.length;
                     for (i = 0; i < objects.length; ++i) {
                         component = objects[i];

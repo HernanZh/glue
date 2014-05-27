@@ -336,6 +336,7 @@ glue.module.create(
                         if (baseObject.init) {
                             baseObject.init();
                         }
+                        return module;
                     },
                     removeChild: function (baseObject) {
                         removedChildren.push(baseObject);
