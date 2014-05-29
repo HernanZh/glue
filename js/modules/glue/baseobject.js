@@ -189,11 +189,15 @@ glue.module.create(
 
                         context.restore();
                     },
+                    pointerEvents: true,
                     pointerDown: function (e) {
                         var i,
                             l = children.length,
                             childEvent,
                             pos;
+                        if (!this.pointerEvents) {
+                            return;
+                        }
                         callRegistrants('pointerDown', e);
 
                         if (l) {
@@ -212,6 +216,9 @@ glue.module.create(
                             l = children.length,
                             childEvent,
                             pos;
+                        if (!this.pointerEvents) {
+                            return;
+                        }
                         callRegistrants('pointerMove', e);
 
                         if (l) {
@@ -230,6 +237,9 @@ glue.module.create(
                             l = children.length,
                             childEvent,
                             pos;
+                        if (!this.pointerEvents) {
+                            return;
+                        }
                         callRegistrants('pointerUp', e);
 
                         if (l) {
