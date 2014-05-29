@@ -6378,7 +6378,7 @@ glue.module.create(
                     timer: 0,
                     family: [],
                     addToFamily: function (name) {
-                        this.family.push(name);
+                        module.family.push(name);
                     },
                     add: function (object) {
                         return Sugar.combine(this, object);
@@ -6402,7 +6402,7 @@ glue.module.create(
                             }
                             children[i].update(gameData);
                         }
-                        ++this.timer;
+                        ++module.timer;
                     },
                     count: 0,
                     updateWhenPaused: false,
@@ -6455,7 +6455,7 @@ glue.module.create(
                             l = children.length,
                             childEvent,
                             pos;
-                        if (!this.pointerEvents) {
+                        if (!module.pointerEvents) {
                             return;
                         }
                         callRegistrants('pointerDown', e);
@@ -6476,7 +6476,7 @@ glue.module.create(
                             l = children.length,
                             childEvent,
                             pos;
-                        if (!this.pointerEvents) {
+                        if (!module.pointerEvents) {
                             return;
                         }
                         callRegistrants('pointerMove', e);
@@ -6497,7 +6497,7 @@ glue.module.create(
                             l = children.length,
                             childEvent,
                             pos;
-                        if (!this.pointerEvents) {
+                        if (!module.pointerEvents) {
                             return;
                         }
                         callRegistrants('pointerUp', e);
@@ -6583,7 +6583,7 @@ glue.module.create(
                     setOriginRelative: function (value) {
                         var dimension;
                         if (Sugar.isVector(value)) {
-                            dimension = this.getDimension();
+                            dimension = module.getDimension();
                             origin.x = value.x * dimension.width;
                             origin.y = value.y * dimension.height;
                         }
@@ -6600,7 +6600,7 @@ glue.module.create(
                     addChild: function (baseObject) {
                         children.push(baseObject);
                         if (baseObject.setParent) {
-                            baseObject.setParent(this);
+                            baseObject.setParent(module);
                         }
 
                         if (baseObject.init) {
@@ -6624,12 +6624,12 @@ glue.module.create(
                         return uniqueID;
                     },
                     collidesWith: function (other) {
-                        return this.getBoundingBox().intersect(other.getBoundingBox());
+                        return module.getBoundingBox().intersect(other.getBoundingBox());
                     },
                     collidesWithGroup: function (array) {
                         var i,
                             obj,
-                            box = this.getBoundingBox();
+                            box = module.getBoundingBox();
                         if (Sugar.isEmpty(array)) {
                             return null;
                         }
