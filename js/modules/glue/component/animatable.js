@@ -89,7 +89,7 @@ glue.module.create('glue/component/animatable', [
                 currentFrame += currentAnimation.imageSpeed || 1;
                 if (currentAnimation.loop) {
                     while (currentFrame >= currentAnimation.frames.length) {
-                        currentFrame -= currentAnimation.frames.length;
+                        currentFrame -= currentAnimation.frames.length - currentAnimation.backTo;
                         reachedEnd = true;
                     }
                 } else {
@@ -123,6 +123,9 @@ glue.module.create('glue/component/animatable', [
                 if (anim && currentAnimation !== anim) {
                     if (!Sugar.isDefined(anim.loop)) {
                         anim.loop = true;
+                    }
+                    if (!Sugar.isDefined(anim.backTo)) {
+                        anim.backTo = 0;
                     }
                     // set even if there is no callback
                     onCompleteCallback = callback;
