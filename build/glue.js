@@ -6786,10 +6786,14 @@ glue.module.create('glue/component/animatable', [
                     // set even if there is no callback
                     onCompleteCallback = callback;
                     currentAnimation = anim;
+                    currentAnimation.name = name;
                     if (!keepCurrentFrame) {
                         currentFrame = 0;
                     }
                 }
+            },
+            getAnimation: function () {
+                return currentAnimation ? currentAnimation.name : null;
             },
             setFrame: function (frameNumber) {
                 currentFrame = frameNumber;
