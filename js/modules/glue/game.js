@@ -555,7 +555,8 @@ glue.module.create('glue/game', [
                 return array;
             },
             getByFamily: function (type) {
-                return quickAccess[type];
+                var array = quickAccess[type];
+                return array ? array : [];
             },
             canvas: {
                 getDimension: function () {

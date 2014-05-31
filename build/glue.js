@@ -9156,7 +9156,8 @@ glue.module.create('glue/game', [
                 return array;
             },
             getByFamily: function (type) {
-                return quickAccess[type];
+                var array = quickAccess[type];
+                return array ? array : [];
             },
             canvas: {
                 getDimension: function () {
@@ -10152,6 +10153,14 @@ glue.module.create('glue/math/rectangle', ['glue'], function (Glue) {
             },
             clone: function () {
                 return module(this.x, this.y, this.width, this.height);
+            },
+            hasPosition: function (vector) {
+                return !(
+                    vector.x < this.x ||
+                    vector.y < this.y ||
+                    vector.x >= this.x + this.width ||
+                    vector.y >= this.y + this.height
+                );
             }
         };
     };
