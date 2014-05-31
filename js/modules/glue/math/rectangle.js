@@ -15,14 +15,6 @@ glue.module.create('glue/math/rectangle', ['glue'], function (Glue) {
             y: y,
             width: width,
             height: height,
-            hasPosition: function (position) {
-                if (position.x >= this.x && position.x <= this.x + this.width &&
-                    position.y >= this.y && position.y <= this.y + this.height) {
-                    return true;
-                } else {
-                    return false;
-                }
-            },
             getX2: function () {
                 return this.x + this.width;
             },
