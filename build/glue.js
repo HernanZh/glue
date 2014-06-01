@@ -6623,19 +6623,26 @@ glue.module.create(
                     getID: function () {
                         return uniqueID;
                     },
-                    collidesWith: function (other) {
-                        return module.getBoundingBox().intersect(other.getBoundingBox());
+                    collidesWith: function (other, offset) {
+                        if (!Sugar.isDefined(offset)) {
+                            offset = Vector(0, 0);
+                        }
+                        return module.getBoundingBox().offset(offset).intersect(other.getBoundingBox());
                     },
-                    collidesWithGroup: function (array) {
+                    collidesWithGroup: function (array, offset) {
                         var i,
                             obj,
-                            box = module.getBoundingBox();
+                            box;
+                        if (!Sugar.isDefined(offset)) {
+                            offset = Vector(0, 0);
+                        }
                         if (Sugar.isEmpty(array)) {
                             return null;
                         }
                         if (!Sugar.isArray(array)) {
                             throw 'Collision check must be with an Array of object';
                         }
+                        box = module.getBoundingBox().offset(offset);
                         for (i = 0; i < array.length; ++i) {
                             obj = array[i];
                             if (obj.getBoundingBox && box.intersect(obj.getBoundingBox())) {
