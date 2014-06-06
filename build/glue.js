@@ -9322,13 +9322,26 @@ glue.module.create(
                 var asset,
                     object,
                     onJSONLoaded = function () {
+                        var done = false;
                         object = loadedAssets.json[name + '_json'];
                         object.onload = function () {
-                            loadedAssets.audio[name] = asset;
-                            success();
+                            if (!done) {
+                                loadedAssets.audio[name] = asset;
+                                success();
+                                done = true;
+                            }
                         };
                         asset = new Audio(object);
                         success();
+
+                        // give up after 10s
+                        setTimeout(function () {
+                            if (!done) {
+                                loadedAssets.audio[name] = asset;
+                                success();
+                                done = true;
+                            }
+                        }, 10000);
                     };
 
                 loadJSON(name + '_json', assetPath + 'json/' + source, onJSONLoaded, failure);
