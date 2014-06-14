@@ -13,6 +13,7 @@ glue.module.create(
         'glue/math/matrix'
     ],
     function (Glue, Vector, Rectangle, Dimension, Matrix) {
+        'use strict';
         var Sugar = Glue.sugar,
             crossInstanceID = 0;
         return function () {
@@ -147,7 +148,7 @@ glue.module.create(
                     count: 0,
                     updateWhenPaused: false,
                     draw: function (gameData) {
-                        var scroll = gameData.scroll || Vector(0, 0),
+                        var scroll = gameData.viewport,
                             context = gameData.context,
                             i,
                             l;

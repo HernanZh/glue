@@ -6273,6 +6273,7 @@ glue.module.create(
         'glue/math/matrix'
     ],
     function (Glue, Vector, Rectangle, Dimension, Matrix) {
+        'use strict';
         var Sugar = Glue.sugar,
             crossInstanceID = 0;
         return function () {
@@ -6407,7 +6408,7 @@ glue.module.create(
                     count: 0,
                     updateWhenPaused: false,
                     draw: function (gameData) {
-                        var scroll = gameData.scroll || Vector(0, 0),
+                        var scroll = gameData.viewport,
                             context = gameData.context,
                             i,
                             l;
@@ -8616,10 +8617,11 @@ glue.module.create('glue/game', [
     'glue',
     'glue/domready',
     'glue/math/vector',
+    'glue/math/rectangle',
     'glue/event/system',
     'glue/loader',
     'glue/preloader'
-], function (Glue, DomReady, Vector, Event, Loader, Preloader) {
+], function (Glue, DomReady, Vector, Rectangle, Event, Loader, Preloader) {
     'use strict';
     var Sugar = Glue.sugar,
         win = null,
@@ -8639,9 +8641,8 @@ glue.module.create('glue/game', [
         backBuffer = null,
         backBufferContext2D = null,
         canvasSupported = false,
-        canvasDimension = null,
+        viewport = Rectangle(0, 0, 640, 480),
         canvasScale = {},
-        scroll = Vector(0, 0),
         isRunning = false,
         isPaused = false,
         debug = false,
@@ -8661,8 +8662,8 @@ glue.module.create('glue/game', [
             if (canvas === null) {
                 canvas = document.createElement('canvas');
                 canvas.id = canvasId;
-                canvas.width = canvasDimension.width;
-                canvas.height = canvasDimension.height;
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
                 if (document.getElementById('wrapper') !== null) {
                     document.getElementById('wrapper').appendChild(canvas);
                 } else {
@@ -8696,8 +8697,7 @@ glue.module.create('glue/game', [
                 context: useDoubleBuffering ? backBufferContext2D : context2D,
                 backBufferCanvas: useDoubleBuffering ? backBuffer : canvas,
                 canvasScale: canvasScale,
-                canvasDimension: canvasDimension,
-                scroll: scroll
+                viewport: viewport
             };
         },
         resizeGame = function () {
@@ -8718,8 +8718,8 @@ glue.module.create('glue/game', [
                 height = width * canvasRatio;
             }
 
-            canvasScale.x = width / canvasDimension.width;
-            canvasScale.y = height / canvasDimension.height;
+            canvasScale.x = width / viewport.width;
+            canvasScale.y = height / viewport.height;
             if (useDoubleBuffering) {
                 canvas.width = width;
                 canvas.height = height;
@@ -8897,16 +8897,16 @@ glue.module.create('glue/game', [
                 (touch.pageX - canvas.offsetLeft) / canvasScale.x, (touch.pageY - canvas.offsetTop) / canvasScale.y
             );
             e.worldPosition = e.position.clone();
-            e.worldPosition.x += scroll.x;
-            e.worldPosition.y += scroll.y;
+            e.worldPosition.x += viewport.x;
+            e.worldPosition.y += viewport.y;
         },
         addMousePosition = function (e) {
             e.position = Vector(
                 (e.clientX - canvas.offsetLeft) / canvasScale.x, (e.clientY - canvas.offsetTop) / canvasScale.y
             );
             e.worldPosition = e.position.clone();
-            e.worldPosition.x += scroll.x;
-            e.worldPosition.y += scroll.y;
+            e.worldPosition.x += viewport.x;
+            e.worldPosition.y += viewport.y;
         },
         touchStart = function (e) {
             var id, i;
@@ -9009,7 +9009,9 @@ glue.module.create('glue/game', [
                     doc = win.document;
                     // config.canvas is mandatory
                     canvasId = config.canvas.id;
-                    canvasDimension = config.canvas.dimension;
+                    if (config.canvas.viewport) {
+                        viewport = config.canvas.viewport;
+                    }
                     if (config.game) {
                         gameInfo = config.game;
                     }
@@ -9167,8 +9169,8 @@ glue.module.create('glue/game', [
                 return array ? array : [];
             },
             canvas: {
-                getDimension: function () {
-                    return canvasDimension;
+                getViewport: function () {
+                    return viewport;
                 },
                 getScale: function () {
                     return canvasScale;
@@ -9179,9 +9181,6 @@ glue.module.create('glue/game', [
             },
             getObjectCount: function () {
                 return objects.length;
-            },
-            getScroll: function () {
-                return scroll;
             },
             pause: function (force) {
                 isPaused = true;
@@ -10316,275 +10315,6 @@ glue.module.create('glue/preloader', [
     return module;
 });
 /**
- *  @module SAT (Separating Axis Theorem)
- *  @desc Handles the collision between two rectangles.
- *  @copyright (C) SpilGames
- *  @license BSD 3-Clause License (see LICENSE file in project root)
- */
-glue.module.create(
-    'glue/sat',
-    [
-        'glue',
-        'glue/math',
-        'glue/math/vector',
-        'glue/math/rectangle',
-        'glue/math/dimension',
-        'glue/game'
-    ],
-    function (Glue, Mathematics, Vector, Rectangle, Dimension, Game) {
-        'use strict';
-        var Sugar = Glue.sugar,
-            math = Mathematics(),
-            circleCollision = function (circle1, circle2, correction, unit) {
-                var distance;
-                correction.copy(circle1);
-                correction.substract(circle2);
-                distance = correction.length();
-                if (distance > circle1.radius + circle2.radius) {
-                    correction.x = correction.y = 0;
-                    return false;
-                }
-                correction.normalize(distance);
-                unit.copy(correction);
-                correction.scale((circle1.radius + circle2.radius) - distance);
-                return true;
-            },
-            rectCollision = function (rect1, rect2, correction, side, rect) {
-                if (rect1.intersect(rect2)) {
-                    var inter = rect1.intersection(rect2),
-                        direction = Vector(0, 0);
-                    if (inter.width > inter.height) {
-                        direction.y = math.sign(rect1.y - rect2.y);
-                        correction.y += inter.height * direction.y;
-                        side.y = direction.y;
-                    } else {
-                        direction.x = math.sign(rect1.x - rect2.x)
-                        correction.x += inter.width * direction.x;
-                        side.x = direction.x;
-                    }
-                    rect.x = inter.x;
-                    rect.y = inter.y;
-                    rect.width = inter.width;
-                    rect.height = inter.height;
-                    return true;
-                }
-                return false;
-            },
-            overlapRect = function (rect1, rect2) {
-                return rect1.intersect(rect2);
-            },
-            overlapCircle = function (circle1, circle2) {
-                var distance = Math.sqrt(math.square(circle1.x - circle2.x) + math.square(circle1.y - circle2.y));
-                return distance < circle1.radius + circle2.radius;
-            },
-            reflectCircle = function (obj, unit) {
-                var velocity = obj.kineticable.getVelocity(),
-                    bounce = obj.kineticable.getBounce(),
-                    unitScale = unit.scale(velocity.dotProduct(unit)),
-                    dist = velocity.static.substract(velocity, unitScale),
-                    after = dist.substract(unitScale),
-                    reflection = after.substract(velocity).scale(bounce);
-                 velocity.add(reflection);                           
-                 obj.kineticable.setVelocity(velocity);
-            },
-            solveCircleToCircle = function (obj1, obj2) {
-                var circle1 = obj1.kineticable.toCircle(),
-                    circle2 = obj2.kineticable.toCircle(),
-                    correction1 = Vector(0, 0),
-                    correction2 = Vector(0, 0),
-                    unit1 = Vector(0, 0),
-                    unit2 = Vector(0, 0),
-                    position1,
-                    position2;
-                if (circleCollision(circle1, circle2, correction2, unit2)) {
-                    if (obj2.kineticable.isDynamic()) {
-                        position2 = obj2.kineticable.getPosition();
-                        position2.substract(correction2);
-                        reflectCircle(obj2, unit2);
-                    }
-                    
-                    if (obj1.kineticable.isDynamic()) {
-                        circleCollision(circle2, circle1, correction1, unit1);
-                        position1 = obj1.kineticable.getPosition();
-                        position1.substract(correction1);
-                        reflectCircle(obj1, unit1);
-                    }
-                    return true;
-                }
-                return false;
-            },
-            solveRectangeToRectangle = function (obj1, obj2) {
-                var bound1 = obj1.kineticable.toRectangle(),
-                    bound2 = obj2.kineticable.toRectangle(),
-                    correction1 = Vector(0, 0),
-                    correction2 = Vector(0, 0),
-                    side1 = Vector(0, 0),
-                    side2 = Vector(0, 0),
-                    velocity,
-                    velocitheight,
-                    position1,
-                    position2,
-                    intersection = Rectangle(0, 0, 0, 0);
-                if (rectCollision(bound1, bound2, correction2, side2, intersection)) {
-                    if (obj2.kineticable.isDynamic()) {
-                        velocitheight = obj2.kineticable.getVelocity();
-                        position2 = obj2.kineticable.getPosition();
-                        position2.substract(correction2);
-                        side2.scale(-1);
-                        obj2.kineticable.setPosition(position2);
-                        obj2.kineticable.setSide(side2);
-                        if (side2.y !== 0) {
-                            if ((side2.y > 0 && velocitheight.y < 0) || (side2.y < 0 && velocitheight.y > 0 && intersection.height > 1)) {
-                                velocitheight.y *= -obj2.kineticable.getBounce();
-                            }
-                        } else if (side2.x !== 0) {
-                            if ((side2.x > 0 && velocitheight.x < 0) || (side2.x < 0 && velocitheight.x > 0 && intersection.width > 1)) {
-                                velocitheight.x *= -obj2.kineticable.getBounce();
-                            }
-                        }
-                    }
-
-                    if (obj1.kineticable.isDynamic()) {
-                        velocity = obj1.kineticable.getVelocity();
-                        position1 = obj1.kineticable.getPosition();
-                        rectCollision(bound2, bound1, correction1, side1, intersection);
-                        position1.substract(correction1);
-                        side1.scale(-1);
-                        obj1.kineticable.setPosition(position1);
-                        obj1.kineticable.setSide(side1);
-                        if (side1.y !== 0) {
-                            if ((side1.y > 0 && velocity.y < 0) || (side1.y < 0 && velocity.y > 0)) {
-                                velocity.y *= -obj1.kineticable.getBounce();
-                            }
-                        } else if (side1.x !== 0) {
-                            if ((side1.x > 0 && velocity.x < 0) || (side1.x < 0 && velocity.x > 0)) {
-                                velocity.x *= -obj1.kineticable.getBounce();
-                            }
-                        }
-                    }
-                    return true;
-                }
-                return false;
-            },
-            module = {
-                TOP: 0,
-                BOTTOM: 1,
-                LEFT: 2,
-                RIGHT: 3,
-                RECTANGLE_TO_RECTANGLE: 10,
-                CIRCLE_TO_CIRCLE: 20,
-                collideGroupVsGroup: function (group1, group2, type) {
-                    var i,
-                        len;
-                    if (Sugar.isArray(group1) && Sugar.isArray(group2)) {
-                        for (i = 0, len = group1.length; i < len; ++i) {
-                            module.collideGroup(group1[i], group2, type);
-                        }
-                    } else {
-                        throw 'The colliding groups must be Arrays.';
-                    }
-                },
-                collideGroup: function (obj, group, type) {
-                    var i,
-                        len;
-                    if (Sugar.isArray(group)) {
-                        if (Sugar.isDefined(obj.kineticable)) {
-                            for (i = 0, len = group.length; i < len; ++i) {
-                                if (group.indexOf(obj) !== i) {
-                                    module.collide(obj, group[i], type);
-                                }
-                            }
-                        } else {
-                            throw 'Collisions can only be tested between Kineticable.';
-                        }
-                    } else {
-                        throw 'The colliding group must be an Array.';
-                    }
-                },
-                collide: function (obj1, obj2, type) {
-                    if (Sugar.isDefined(obj1.kineticable) && Sugar.isDefined(obj2.kineticable)) {
-                        if (obj1.isActive() && obj2.isActive()) {
-                            type = type || module.RECTANGLE_TO_RECTANGLE;
-                            switch (type) {
-                                case module.RECTANGLE_TO_RECTANGLE:
-                                    return solveRectangeToRectangle(obj1, obj2);
-                                    break;
-                                case module.CIRCLE_TO_CIRCLE:
-                                    return solveCircleToCircle(obj1, obj2);
-                                    break;
-                                default:
-                                    throw 'The type of collision is not valid.';
-                                    break;
-                            }
-                            return false;
-                        }
-                        else {
-                            return false;
-                        }
-                    } else {
-                        throw 'Collisions can only be tested between Kineticable.';
-                    }
-                },
-                overlap: function (obj1, obj2, type) {
-                    if (Sugar.isDefined(obj1.kineticable) && Sugar.isDefined(obj2.kineticable)) {
-                        if (obj1.isActive() && obj2.isActive()) {
-                            type = type || module.RECTANGLE_TO_RECTANGLE;
-                            switch (type) {
-                                case module.RECTANGLE_TO_RECTANGLE:
-                                    return overlapRect(obj1, obj2);
-                                    break;
-                                case module.CIRCLE_TO_CIRCLE:
-                                    return overlapCircle(obj1, obj2);
-                                    break;
-                                default:
-                                    return overlapRect(obj1, obj2);
-                                    break;
-                            }
-                            return false;
-                        }
-                        else {
-                            return false;
-                        }
-                    } else {
-                        throw 'Collisions can only be tested between Kineticable.';
-                    }
-                },
-                overlapGroupVsGroup: function (group1, group2, type) {
-                    var i,
-                        len;
-                    if (Sugar.isArray(group1) && Sugar.isArray(group2)) {
-                        for (i = 0, len = group1.length; i < len; ++i) {
-                            module.overlapGroup(group1[i], group2, type);
-                        }
-                    } else {
-                        throw 'The colliding groups must be Arrays.';
-                    }
-                },
-                overlapGroup: function (obj, group, type) {
-                    var i,
-                        len;
-                    if (Sugar.isArray(group)) {
-                        if (Sugar.isDefined(obj.kineticable)) {
-                            for (i = 0, len = group.length; i < len; ++i) {
-                                if (group.indexOf(obj) !== i) {
-                                    module.overlap(obj, group[i], type);
-                                }
-                            }
-                        } else {
-                            throw 'Collisions can only be tested between Kineticable.';
-                        }
-                    } else {
-                        throw 'The colliding group must be an Array.';
-                    }
-                },
-                update: function (deltaT, scroll) {
-
-                }
-            };
-        return module;
-    }
-);
-/**
  *  @module Screen
  *  @desc Directs a game screen
  *  @copyright (C) SpilGames
@@ -10693,180 +10423,6 @@ glue.module.create('glue/screen', [
         return module;
     };
 });
-/**
- *  @module Spatial
- *  @desc Checks if collision is needed using a spatial matrix
- *  @copyright (C) SpilGames
- *  @license BSD 3-Clause License (see LICENSE file in project root)
- */
-glue.module.create(
-    'glue/spatial',
-    [
-        'glue',
-        'glue/game',
-        'glue/math',
-        'glue/math/vector',
-        'glue/math/dimension'
-    ],
-    function (
-        Glue,
-        Game,
-        Mathematics,
-        Vector,
-        Dimension
-    ) {
-        'use strict';
-        return function () {
-            var Sugar = Glue.sugar,
-                math = Mathematics(),
-                debug = false,
-                gridDimension,
-                gridSize,
-                spatialGrid,
-                addCell = function (position, cells) {
-                    var gridPosition = parseInt(
-                           (Math.floor(position.x / gridSize)) +
-                           (Math.floor(position.y / gridSize)) *
-                           (gridDimension.width / gridSize) 
-                        );
-
-                    if (!Sugar.contains(cells, gridPosition)) {
-                        cells.push(gridPosition);
-                    }
-                },
-                getObjectCells = function (object) {
-                    var cells = [],
-                        position = object.spritable.getPosition(),
-                        dimension = object.spritable.getDimension(),
-                        min = Vector(
-                            position.x,
-                            position.y
-                        ),
-                        max = Vector(
-                            position.x + dimension.width,
-                            position.y + dimension.height
-                        );
-
-                    // top left
-                    addCell(Vector(min.x, min.y), cells);
-                    // top right
-                    addCell(Vector(max.x, min.y), cells);
-                    // bottom right
-                    addCell(Vector(max.x, max.y), cells);
-                    // bottom left
-                    addCell(Vector(min.x, max.y), cells);
-
-                    return cells;
-                },
-                resetGrid = function () {
-                    var gridCount,
-                        i = 0;
-
-                    spatialGrid = {};
-                    gridCount = 
-                        (gridDimension.width / gridSize) * 
-                        (gridDimension.height / gridSize);
-                    for (i; i < gridCount; ++i) {
-                        spatialGrid[i] = [];
-                    }
-                },
-                module = {
-                    setup: function (config) {
-                        config = config || {};
-                        if (Sugar.isDefined(config.gridDimension)) {
-                            gridDimension = config.gridDimension;
-                        } else {
-                            gridDimension = Game.canvas.getDimension();
-                        }
-                        if (Sugar.isDefined(config.gridSize)) {
-                            gridSize = config.gridSize;
-                        } else {
-                            gridSize = gridDimension.height / 3;
-                        }
-                        resetGrid();
-                    },
-                    setDebug: function (value) {
-                        if (value === true) {
-                            Game.add(module);
-                        }
-                        if (value === false) {
-                            Game.remove(module);
-                        }
-                    },
-                    clearObjects: function () {
-                        resetGrid();
-                    },
-                    addObject: function (object) {
-                        var inCells = getObjectCells(object),
-                            i = 0,
-                            l = inCells.length;
-                        for (i; i < l; ++i) {
-                            spatialGrid[inCells[i]].push(object);
-                        }
-                    },
-                    addArray: function (array) {
-                        var i,
-                            len;
-                        for (i = 0, len = array.length; i < len; ++i) {
-                            module.addObject(array[i]);
-                        }
-                    },
-                    getNearbyObjects: function (object) {
-                        var nearby = [],
-                            inCells = getObjectCells(object),
-                            i = 0,
-                            l = inCells.length;
-
-                        for (i; i < l; ++i) {
-                            nearby.push(spatialGrid[inCells[i]]);
-                        }
-                        return nearby;
-                    },
-                    handleNearbyObjects: function (obj, func) {
-                        var list,
-                            i,
-                            len,
-                            j,
-                            jlen;
-                        if (Sugar.isFunction(func)) {
-                            list = module.getNearbyObjects(obj);
-                            for (i = 0, len = list.length; i < len; ++i) {
-                                if (list[i]) {
-                                    for (j = 0, jlen = list[i].length; j < jlen; ++j) {
-                                        if (list[i].indexOf(obj) !== j) {
-                                            func(list[i][j]);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    draw: function (deltaT, context) {
-                        var x = 0,
-                            y = 0;
-
-                        context.save();
-                        context.beginPath();
-                        for (x; x <= gridDimension.width; x += gridSize) {
-                            context.moveTo(x, 0);
-                            context.lineTo(x, gridDimension.height);
-                        }
-                        for (y; y <= gridDimension.height; y += gridSize) {
-                            context.moveTo(0, y);
-                            context.lineTo(gridDimension.width, y);
-                        }
-                        context.strokeStyle = 'black';
-                        context.stroke();
-                        context.closePath();
-                        context.restore();
-                    }
-                };
-
-            return module;
-        }
-    }
-);
-
 /**
  *  @module Sugar
  *  @namespace modules.glue

@@ -8,10 +8,11 @@ glue.module.create('glue/game', [
     'glue',
     'glue/domready',
     'glue/math/vector',
+    'glue/math/rectangle',
     'glue/event/system',
     'glue/loader',
     'glue/preloader'
-], function (Glue, DomReady, Vector, Event, Loader, Preloader) {
+], function (Glue, DomReady, Vector, Rectangle, Event, Loader, Preloader) {
     'use strict';
     var Sugar = Glue.sugar,
         win = null,
@@ -31,9 +32,8 @@ glue.module.create('glue/game', [
         backBuffer = null,
         backBufferContext2D = null,
         canvasSupported = false,
-        canvasDimension = null,
+        viewport = Rectangle(0, 0, 640, 480),
         canvasScale = {},
-        scroll = Vector(0, 0),
         isRunning = false,
         isPaused = false,
         debug = false,
@@ -53,8 +53,8 @@ glue.module.create('glue/game', [
             if (canvas === null) {
                 canvas = document.createElement('canvas');
                 canvas.id = canvasId;
-                canvas.width = canvasDimension.width;
-                canvas.height = canvasDimension.height;
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
                 if (document.getElementById('wrapper') !== null) {
                     document.getElementById('wrapper').appendChild(canvas);
                 } else {
@@ -88,8 +88,7 @@ glue.module.create('glue/game', [
                 context: useDoubleBuffering ? backBufferContext2D : context2D,
                 backBufferCanvas: useDoubleBuffering ? backBuffer : canvas,
                 canvasScale: canvasScale,
-                canvasDimension: canvasDimension,
-                scroll: scroll
+                viewport: viewport
             };
         },
         resizeGame = function () {
@@ -110,8 +109,8 @@ glue.module.create('glue/game', [
                 height = width * canvasRatio;
             }
 
-            canvasScale.x = width / canvasDimension.width;
-            canvasScale.y = height / canvasDimension.height;
+            canvasScale.x = width / viewport.width;
+            canvasScale.y = height / viewport.height;
             if (useDoubleBuffering) {
                 canvas.width = width;
                 canvas.height = height;
@@ -289,16 +288,16 @@ glue.module.create('glue/game', [
                 (touch.pageX - canvas.offsetLeft) / canvasScale.x, (touch.pageY - canvas.offsetTop) / canvasScale.y
             );
             e.worldPosition = e.position.clone();
-            e.worldPosition.x += scroll.x;
-            e.worldPosition.y += scroll.y;
+            e.worldPosition.x += viewport.x;
+            e.worldPosition.y += viewport.y;
         },
         addMousePosition = function (e) {
             e.position = Vector(
                 (e.clientX - canvas.offsetLeft) / canvasScale.x, (e.clientY - canvas.offsetTop) / canvasScale.y
             );
             e.worldPosition = e.position.clone();
-            e.worldPosition.x += scroll.x;
-            e.worldPosition.y += scroll.y;
+            e.worldPosition.x += viewport.x;
+            e.worldPosition.y += viewport.y;
         },
         touchStart = function (e) {
             var id, i;
@@ -401,7 +400,9 @@ glue.module.create('glue/game', [
                     doc = win.document;
                     // config.canvas is mandatory
                     canvasId = config.canvas.id;
-                    canvasDimension = config.canvas.dimension;
+                    if (config.canvas.viewport) {
+                        viewport = config.canvas.viewport;
+                    }
                     if (config.game) {
                         gameInfo = config.game;
                     }
@@ -559,8 +560,8 @@ glue.module.create('glue/game', [
                 return array ? array : [];
             },
             canvas: {
-                getDimension: function () {
-                    return canvasDimension;
+                getViewport: function () {
+                    return viewport;
                 },
                 getScale: function () {
                     return canvasScale;
@@ -571,9 +572,6 @@ glue.module.create('glue/game', [
             },
             getObjectCount: function () {
                 return objects.length;
-            },
-            getScroll: function () {
-                return scroll;
             },
             pause: function (force) {
                 isPaused = true;
