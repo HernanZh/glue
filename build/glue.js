@@ -8482,6 +8482,7 @@ glue.module.create(
     function (Glue, Game, Screen) {
         'use strict';
         var Sugar = Glue.sugar,
+            viewport = Game.canvas.getViewport(),
             screens = {},
             activeScreen = null,
             getScreen = function (name) {
@@ -8529,6 +8530,9 @@ glue.module.create(
                     }
                     activeScreen.onHide();
                     activeScreen = null;
+                    // reset viewport scroll when hiding screen
+                    viewport.x = 0;
+                    viewport.y = 0;
                 },
                 /*
                  * Get the active screen
