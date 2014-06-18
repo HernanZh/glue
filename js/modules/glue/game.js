@@ -513,10 +513,17 @@ glue.module.create('glue/game', [
                     }
                 }
             },
-            removeAll: function () {
-                var i;
+            removeAll: function (removeGlobal) {
+                var i,
+                    object;
                 for (i = 0; i < objects.length; ++i) {
-                    this.remove(objects[i]);
+                    object = objects[i];
+                    if (!object) {
+                        continue;
+                    }
+                    if (!object.global || removeGlobal) {
+                        this.remove(object);
+                    }
                 }
             },
             get: function (componentName) {

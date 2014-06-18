@@ -118,6 +118,7 @@ glue.module.create(
                 module = {
                     timer: 0,
                     family: [],
+                    global: false,
                     addToFamily: function (name) {
                         module.family.push(name);
                     },
