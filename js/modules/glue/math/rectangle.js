@@ -61,6 +61,12 @@ glue.module.create('glue/math/rectangle', ['glue'], function (Glue) {
                     vector.x >= this.x + this.width ||
                     vector.y >= this.y + this.height
                 );
+            },
+            grow: function (size) {
+                this.x -= size / 2;
+                this.y -= size / 2;
+                this.width += size;
+                this.height += size;
             }
         };
     };
