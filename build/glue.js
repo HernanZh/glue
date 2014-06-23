@@ -6306,7 +6306,6 @@ glue.module.create(
                     pointerUp: {}
                 },
                 children = [],
-                removedChildren = [],
                 parent = null,
                 uniqueID = ++crossInstanceID,
                 callRegistrants = function (type, gameData) {
@@ -6364,16 +6363,14 @@ glue.module.create(
                     e.parent = evt;
                     return e;
                 },
-                removeChildren = function () {
-                    var i, object;
-                    for (i = 0; i < removedChildren.length; ++i) {
-                        object = removedChildren[i];
-                        if (Sugar.isFunction(object.destroy)) {
-                            object.destroy();
+                cleanChildren = function () {
+                    var i;
+                    // loop objects array from end to start and remove null elements
+                    for (i = children.length - 1; i >= 0; --i) {
+                        if (children[i] === null) {
+                            children.splice(i, 1);
                         }
-                        Sugar.removeObject(children, object);
                     }
-                    removedChildren.length = 0;
                 },
                 module = {
                     timer: 0,
@@ -6393,16 +6390,17 @@ glue.module.create(
                     },
                     update: function (gameData) {
                         var i,
-                            l;
+                            l,
+                            child;
                         callRegistrants('update', gameData);
                         // clean up
-                        removeChildren();
+                        cleanChildren();
                         // update children
                         for (i = 0, l = children.length; i < l; ++i) {
-                            if (!children[i].update) {
-                                continue;
+                            child = children[i];
+                            if (child && child.update) {
+                                child.update(gameData);
                             }
-                            children[i].update(gameData);
                         }
                         ++module.timer;
                     },
@@ -6412,7 +6410,8 @@ glue.module.create(
                         var scroll = gameData.viewport,
                             context = gameData.context,
                             i,
-                            l;
+                            l,
+                            child;
                         if (!visible) {
                             return;
                         }
@@ -6443,10 +6442,10 @@ glue.module.create(
                         context.translate(origin.x, origin.y);
                         // draw children
                         for (i = 0, l = children.length; i < l; ++i) {
-                            if (!children[i].draw) {
-                                continue;
+                            child = children[i];
+                            if (child && child.draw) {
+                                child.draw(gameData);
                             }
-                            children[i].draw(gameData);
                         }
 
                         context.restore();
@@ -6456,6 +6455,7 @@ glue.module.create(
                         var i,
                             l = children.length,
                             childEvent,
+                            child,
                             pos;
                         if (!module.pointerEvents) {
                             return;
@@ -6466,10 +6466,10 @@ glue.module.create(
                             childEvent = transformEvent(e);
                             // pass through children
                             for (i = 0; i < l; ++i) {
-                                if (!children[i].pointerDown) {
-                                    continue;
+                                child = children[i];
+                                if (child && child.pointerDown) {
+                                    child.pointerDown(childEvent);
                                 }
-                                children[i].pointerDown(childEvent);
                             }
                         }
                     },
@@ -6477,7 +6477,8 @@ glue.module.create(
                         var i,
                             l = children.length,
                             childEvent,
-                            pos;
+                            pos,
+                            child;
                         if (!module.pointerEvents) {
                             return;
                         }
@@ -6487,10 +6488,10 @@ glue.module.create(
                             childEvent = transformEvent(e);
                             // pass through children
                             for (i = 0; i < l; ++i) {
-                                if (!children[i].pointerMove) {
-                                    continue;
+                                child = children[i];
+                                if (child && !child.pointerMove) {
+                                    children[i].pointerMove(childEvent);
                                 }
-                                children[i].pointerMove(childEvent);
                             }
                         }
                     },
@@ -6498,7 +6499,8 @@ glue.module.create(
                         var i,
                             l = children.length,
                             childEvent,
-                            pos;
+                            pos,
+                            child;
                         if (!module.pointerEvents) {
                             return;
                         }
@@ -6508,10 +6510,10 @@ glue.module.create(
                             childEvent = transformEvent(e);
                             // pass through children
                             for (i = 0; i < l; ++i) {
-                                if (!children[i].pointerUp) {
-                                    continue;
+                                child = children[i];
+                                if (child && child.pointerUp) {
+                                    child.pointerUp(childEvent);
                                 }
-                                children[i].pointerUp(childEvent);
                             }
                         }
                     },
@@ -6599,19 +6601,29 @@ glue.module.create(
                     setVisible: function (value) {
                         visible = value;
                     },
-                    addChild: function (baseObject) {
-                        children.push(baseObject);
-                        if (baseObject.setParent) {
-                            baseObject.setParent(module);
+                    addChild: function (child) {
+                        children.push(child);
+                        if (child.setParent) {
+                            child.setParent(module);
                         }
-
-                        if (baseObject.init) {
-                            baseObject.init();
+                        if (child.init) {
+                            child.init();
                         }
                         return module;
                     },
-                    removeChild: function (baseObject) {
-                        removedChildren.push(baseObject);
+                    removeChild: function (child) {
+                        var i, type, index;
+                        if (!child) {
+                            return;
+                        }
+                        index = children.indexOf(child);
+                        if (index >= 0) {
+                            children[index] = null;
+                            // should destroy be called?
+                            /*if (Sugar.isFunction(child.destroy)) {
+                                child.destroy();
+                            }*/
+                        }
                     },
                     getChildren: function () {
                         return children;
