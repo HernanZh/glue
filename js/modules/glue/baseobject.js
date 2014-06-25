@@ -301,7 +301,7 @@ glue.module.create(
                             }
                             return Rectangle(x1, y1, x2 - x1, y2 - y1);
                         } else {
-                            var box = rectangle.clone();
+                            var box = rectangle.clone(),
                                 scale = module.scalable ? module.scalable.getScale() : Vector(1, 1);
                             box.x *= Math.abs(scale.x);
                             box.y *= Math.abs(scale.y);

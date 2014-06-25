@@ -48,7 +48,7 @@ glue.module.create('glue/game', [
         gameData = {},
         quickAccess = {},
         initCanvas = function () {
-            canvas = document.querySelector('#' + canvasId);
+            canvas = document.getElementById(canvasId);
             // create canvas if it doesn't exist
             if (canvas === null) {
                 canvas = document.createElement('canvas');
