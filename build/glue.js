@@ -8916,6 +8916,9 @@ glue.module.create('glue/game', [
             e.changedTouches[n].worldPosition = e.changedTouches[n].position.clone();
             e.changedTouches[n].worldPosition.x += viewport.x;
             e.changedTouches[n].worldPosition.y += viewport.y;
+            // add 'normal' position
+            e.position = e.changedTouches[n].position.clone();
+            e.worldPosition = e.changedTouches[n].position.clone();            
         },
         addMousePosition = function (e) {
             e.position = Vector(
