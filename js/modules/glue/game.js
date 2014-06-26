@@ -281,15 +281,15 @@ glue.module.create('glue/game', [
                 }
             }
         },
-        addTouchPosition = function (e, n, isTouchEnd) {
-            var touch = !isTouchEnd ? e.targetTouches[n] : e.changedTouches[n];
+        addTouchPosition = function (e, n) {
+            var touch = e.changedTouches[n];
             e.preventDefault();
-            e.position = Vector(
+            e.changedTouches[n].position = Vector(
                 (touch.pageX - canvas.offsetLeft) / canvasScale.x, (touch.pageY - canvas.offsetTop) / canvasScale.y
             );
-            e.worldPosition = e.position.clone();
-            e.worldPosition.x += viewport.x;
-            e.worldPosition.y += viewport.y;
+            e.changedTouches[n].worldPosition = e.changedTouches[n].position.clone();
+            e.changedTouches[n].worldPosition.x += viewport.x;
+            e.changedTouches[n].worldPosition.y += viewport.y;
         },
         addMousePosition = function (e) {
             e.position = Vector(
@@ -302,29 +302,26 @@ glue.module.create('glue/game', [
         touchStart = function (e) {
             var id, i;
             e.preventDefault();
-            for (i = 0; i < e.targetTouches.length; ++i) {
+            for (i = 0; i < e.changedTouches.length; ++i) {
                 addTouchPosition(e, i);
-                e.identifier = e.targetTouches[i].identifier;
-                pointerDown(e);
             }
+            pointerDown(e);
         },
         touchMove = function (e) {
             var id, i;
             e.preventDefault();
-            for (i = 0; i < e.targetTouches.length; ++i) {
+            for (i = 0; i < e.changedTouches.length; ++i) {
                 addTouchPosition(e, i);
-                e.identifier = e.targetTouches[i].identifier;
-                pointerMove(e);
             }
+            pointerMove(e);
         },
         touchEnd = function (e) {
             var id, i;
             e.preventDefault();
             for (i = 0; i < e.changedTouches.length; ++i) {
-                addTouchPosition(e, i, true);
-                e.identifier = e.changedTouches[i].identifier;
-                pointerUp(e);
+                addTouchPosition(e, i);
             }
+            pointerUp(e);
         },
         mouseDown = function (e) {
             e.preventDefault();

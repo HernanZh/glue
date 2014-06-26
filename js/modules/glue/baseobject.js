@@ -229,8 +229,8 @@ glue.module.create(
                             // pass through children
                             for (i = 0; i < l; ++i) {
                                 child = children[i];
-                                if (child && !child.pointerMove) {
-                                    children[i].pointerMove(childEvent);
+                                if (child && child.pointerMove) {
+                                    child.pointerMove(childEvent);
                                 }
                             }
                         }

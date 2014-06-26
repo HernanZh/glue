@@ -66,8 +66,8 @@ glue.module.create('glue/component/animatable', [
                 if (animationSettings.frameWidth && animationSettings.frameHeight) {
                     frameWidth = animationSettings.frameWidth;
                     frameHeight = animationSettings.frameHeight;
-                    frameCountX = Math.floor(settings.image.naturalWidth / frameWidth);
-                    frameCountY = Math.floor(settings.image.naturalHeight / frameHeight);
+                    frameCountX = Math.floor(settings.image.width / frameWidth);
+                    frameCountY = Math.floor(settings.image.height / frameHeight);
                 } else {
                     frameCountX = animationSettings.frameCountX;
                     frameCountY = animationSettings.frameCountY;

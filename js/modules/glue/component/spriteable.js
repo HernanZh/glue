@@ -42,7 +42,7 @@ glue.module.create(
                         if (settings.dimension) {
                             object.setDimension(settings.dimension);
                         } else if (image) {
-                            object.setDimension(Dimension(image.naturalWidth, image.naturalHeight));
+                            object.setDimension(Dimension(image.width, image.height));
                         }
                         if (settings.origin) {
                             object.setOrigin(settings.origin);
@@ -60,7 +60,7 @@ glue.module.create(
                 },
                 setImage: function (value) {
                     image = value;
-                    object.setDimension(Dimension(image.naturalWidth, image.naturalHeight));
+                    object.setDimension(Dimension(image.width, image.height));
                 },
                 getImage: function () {
                     return image;

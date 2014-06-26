@@ -6489,8 +6489,8 @@ glue.module.create(
                             // pass through children
                             for (i = 0; i < l; ++i) {
                                 child = children[i];
-                                if (child && !child.pointerMove) {
-                                    children[i].pointerMove(childEvent);
+                                if (child && child.pointerMove) {
+                                    child.pointerMove(childEvent);
                                 }
                             }
                         }
@@ -6743,8 +6743,8 @@ glue.module.create('glue/component/animatable', [
                 if (animationSettings.frameWidth && animationSettings.frameHeight) {
                     frameWidth = animationSettings.frameWidth;
                     frameHeight = animationSettings.frameHeight;
-                    frameCountX = Math.floor(settings.image.naturalWidth / frameWidth);
-                    frameCountY = Math.floor(settings.image.naturalHeight / frameHeight);
+                    frameCountX = Math.floor(settings.image.width / frameWidth);
+                    frameCountY = Math.floor(settings.image.height / frameHeight);
                 } else {
                     frameCountX = animationSettings.frameCountX;
                     frameCountY = animationSettings.frameCountY;
@@ -8265,7 +8265,7 @@ glue.module.create(
                         if (settings.dimension) {
                             object.setDimension(settings.dimension);
                         } else if (image) {
-                            object.setDimension(Dimension(image.naturalWidth, image.naturalHeight));
+                            object.setDimension(Dimension(image.width, image.height));
                         }
                         if (settings.origin) {
                             object.setOrigin(settings.origin);
@@ -8283,7 +8283,7 @@ glue.module.create(
                 },
                 setImage: function (value) {
                     image = value;
-                    object.setDimension(Dimension(image.naturalWidth, image.naturalHeight));
+                    object.setDimension(Dimension(image.width, image.height));
                 },
                 getImage: function () {
                     return image;
@@ -8907,15 +8907,15 @@ glue.module.create('glue/game', [
                 }
             }
         },
-        addTouchPosition = function (e, n, isTouchEnd) {
-            var touch = !isTouchEnd ? e.targetTouches[n] : e.changedTouches[n];
+        addTouchPosition = function (e, n) {
+            var touch = e.changedTouches[n];
             e.preventDefault();
-            e.position = Vector(
+            e.changedTouches[n].position = Vector(
                 (touch.pageX - canvas.offsetLeft) / canvasScale.x, (touch.pageY - canvas.offsetTop) / canvasScale.y
             );
-            e.worldPosition = e.position.clone();
-            e.worldPosition.x += viewport.x;
-            e.worldPosition.y += viewport.y;
+            e.changedTouches[n].worldPosition = e.changedTouches[n].position.clone();
+            e.changedTouches[n].worldPosition.x += viewport.x;
+            e.changedTouches[n].worldPosition.y += viewport.y;
         },
         addMousePosition = function (e) {
             e.position = Vector(
@@ -8928,29 +8928,26 @@ glue.module.create('glue/game', [
         touchStart = function (e) {
             var id, i;
             e.preventDefault();
-            for (i = 0; i < e.targetTouches.length; ++i) {
+            for (i = 0; i < e.changedTouches.length; ++i) {
                 addTouchPosition(e, i);
-                e.identifier = e.targetTouches[i].identifier;
-                pointerDown(e);
             }
+            pointerDown(e);
         },
         touchMove = function (e) {
             var id, i;
             e.preventDefault();
-            for (i = 0; i < e.targetTouches.length; ++i) {
+            for (i = 0; i < e.changedTouches.length; ++i) {
                 addTouchPosition(e, i);
-                e.identifier = e.targetTouches[i].identifier;
-                pointerMove(e);
             }
+            pointerMove(e);
         },
         touchEnd = function (e) {
             var id, i;
             e.preventDefault();
             for (i = 0; i < e.changedTouches.length; ++i) {
-                addTouchPosition(e, i, true);
-                e.identifier = e.changedTouches[i].identifier;
-                pointerUp(e);
+                addTouchPosition(e, i);
             }
+            pointerUp(e);
         },
         mouseDown = function (e) {
             e.preventDefault();
