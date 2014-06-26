@@ -3858,7 +3858,7 @@ spine.SkeletonBounds.prototype = {
 };
 
 /*!
- *  howler.js v1.1.19
+ *  howler.js v1.1.21
  *  howlerjs.com
  *
  *  (c) 2013-2014, James Simpson of GoldFire Studios
@@ -4006,8 +4006,9 @@ spine.SkeletonBounds.prototype = {
       opus: !!audioTest.canPlayType('audio/ogg; codecs="opus"').replace(/^no$/, ''),
       ogg: !!audioTest.canPlayType('audio/ogg; codecs="vorbis"').replace(/^no$/, ''),
       wav: !!audioTest.canPlayType('audio/wav; codecs="1"').replace(/^no$/, ''),
-      m4a: !!(audioTest.canPlayType('audio/x-m4a;') || audioTest.canPlayType('audio/aac;')).replace(/^no$/, ''),
-      mp4: !!(audioTest.canPlayType('audio/x-mp4;') || audioTest.canPlayType('audio/aac;')).replace(/^no$/, ''),
+      aac: !!audioTest.canPlayType('audio/aac;').replace(/^no$/, ''),
+      m4a: !!(audioTest.canPlayType('audio/x-m4a;') || audioTest.canPlayType('audio/m4a;') || audioTest.canPlayType('audio/aac;')).replace(/^no$/, ''),
+      mp4: !!(audioTest.canPlayType('audio/x-mp4;') || audioTest.canPlayType('audio/mp4;') || audioTest.canPlayType('audio/aac;')).replace(/^no$/, ''),
       weba: !!audioTest.canPlayType('audio/webm; codecs="vorbis"').replace(/^no$/, '')
     };
   }
@@ -4029,6 +4030,11 @@ spine.SkeletonBounds.prototype = {
     self._volume = o.volume !== undefined ? o.volume : 1;
     self._urls = o.urls || [];
     self._rate = o.rate || 1;
+
+    // allow forcing of a specific panningModel ('equalpower' or 'HRTF'),
+    // if none is specified, defaults to 'equalpower' and switches to 'HRTF'
+    // if 3d sound is used
+    self._model = o.model || null;
 
     // setup event functions
     self._onload = [o.onload || function() {}];
@@ -4220,8 +4226,18 @@ spine.SkeletonBounds.prototype = {
         node._sprite = sprite;
 
         // determine where to start playing from
-        var pos = (node._pos > 0) ? node._pos : self._sprite[sprite][0] / 1000,
+        var pos = (node._pos > 0) ? node._pos : self._sprite[sprite][0] / 1000;
+
+        // determine how long to play for
+        var duration = 0;
+        if (self._webAudio) {
           duration = self._sprite[sprite][1] / 1000 - node._pos;
+          if (node._pos > 0) {
+            pos = self._sprite[sprite][0] / 1000 + pos;
+          }
+        } else {
+          duration = self._sprite[sprite][1] / 1000 - (pos - self._sprite[sprite][0] / 1000);
+        }
 
         // determine if this sound should be looped
         var loop = !!(self._loop || self._sprite[sprite][2]);
@@ -4277,7 +4293,7 @@ spine.SkeletonBounds.prototype = {
             node.bufferSource.start(0, pos, duration);
           }
         } else {
-          if (node.readyState === 4 || typeof node.readyState === 'undefined' && navigator.isCocoonJS) {
+          if (node.readyState === 4 || !node.readyState && navigator.isCocoonJS) {
             node.readyState = 4;
             node.id = soundId;
             node.currentTime = pos;
@@ -4398,7 +4414,7 @@ spine.SkeletonBounds.prototype = {
           } else {
             activeNode.bufferSource.stop(0);
           }
-        } else {
+        } else if (!isNaN(activeNode.duration)) {
           activeNode.pause();
           activeNode.currentTime = 0;
         }
@@ -4620,6 +4636,7 @@ spine.SkeletonBounds.prototype = {
           if (activeNode) {
             self._pos3d = [x, y, z];
             activeNode.panner.setPosition(x, y, z);
+            activeNode.panner.panningModel = self._model || 'HRTF';
           }
         }
       } else {
@@ -4780,9 +4797,14 @@ spine.SkeletonBounds.prototype = {
       } else {
         self.load();
         newNode = self._audioNode[self._audioNode.length - 1];
-        newNode.addEventListener(navigator.isCocoonJS ? 'canplaythrough' : 'loadedmetadata', function() {
+
+        // listen for the correct load event and fire the callback
+        var listenerEvent = navigator.isCocoonJS ? 'canplaythrough' : 'loadedmetadata';
+        var listener = function() {
+          newNode.removeEventListener(listenerEvent, listener, false);
           callback(newNode);
-        });
+        };
+        newNode.addEventListener(listenerEvent, listener, false);
       }
     },
 
@@ -4861,6 +4883,7 @@ spine.SkeletonBounds.prototype = {
 
       // create the panner
       node[index].panner = ctx.createPanner();
+      node[index].panner.panningModel = self._model || 'equalpower';
       node[index].panner.setPosition(self._pos3d[0], self._pos3d[1], self._pos3d[2]);
       node[index].panner.connect(node[index]);
 
@@ -4930,12 +4953,17 @@ spine.SkeletonBounds.prototype = {
         }
 
         if (!self._webAudio) {
-           // remove the source if using HTML5 Audio
+          // remove the source if using HTML5 Audio
           nodes[i].src = '';
         } else {
           // disconnect the output from the master gain
           nodes[i].disconnect(0);
         }
+      }
+
+      // make sure all timeouts are cleared
+      for (i=0; i<self._onendTimer.length; i++) {
+        clearTimeout(self._onendTimer[i].timer);
       }
 
       // remove the reference in the global Howler object
