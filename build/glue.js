@@ -6714,6 +6714,9 @@ glue.module.create(
                         box = module.getBoundingBox().offset(offset);
                         for (i = 0; i < array.length; ++i) {
                             obj = array[i];
+                            if (obj === module) {
+                                continue;
+                            }
                             if (obj.getBoundingBox && box.intersect(obj.getBoundingBox())) {
                                 return obj;
                             }
