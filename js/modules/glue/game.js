@@ -71,7 +71,7 @@ glue.module.create('glue/game', [
                     backBuffer.height = canvas.height;
                     backBufferContext2D = backBuffer.getContext('2d');
                 }
-                if (useDoubleBuffering && !smoothing) {
+                if (!smoothing) {
                     if (context2D.imageSmoothingEnabled) {
                         context2D.imageSmoothingEnabled = false;
                     }
